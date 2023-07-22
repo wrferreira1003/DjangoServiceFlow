@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from Cliente.models import Cliente
+from validations.validators import valida_file_extension
+
 import os
 
 class Servico(models.Model):
@@ -28,18 +30,22 @@ STATUS_CHOICES = [
     ('recusado', 'Recusado'),
   ]
 
-#Funcao para validacao de documentos
-def valida_file_extension(value):
-  ext = os.path.splitext(value.name)[1]
-  valid_extensions = ['.pdf', '.doc', '.docx', '.jpg', '.png', '.jpeg']
-  if not ext.lower() in valid_extensions:
-    raise ValidationError(u'Tipo de arquivo não suportado!')
-
 #Caso solicitar pedido Ata Notarial, passo os dados do cliente, que precisa de um afiliado e os demais dados desse servico.
 class ModelPedido(models.Model):
   sub_servico = models.ForeignKey(Subservico, on_delete=models.CASCADE)
   cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-  status = models.CharField(max_length=50, choices=STATUS_CHOICES)
+  status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='pendente')
   mensagem = models.CharField(max_length=500)
   documento= models.FileField(upload_to='documentos/', validators=[valida_file_extension])
+
+  nome_envolvido = models.CharField(max_length=200, blank=True, null=True)
+  cpf_envolvido = models.CharField(max_length=14, blank=True, null=True)
+  indetidade_envolvido = models.CharField(max_length=20, blank=True, null=True)
+  documento_envolvido = models.FileField(upload_to='documentos_partes/', 
+                                         validators=[valida_file_extension],
+                                         blank=True, null=True)
+  
+
+  def __str__(self):
+    return self.cliente
 
