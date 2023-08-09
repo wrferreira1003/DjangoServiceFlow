@@ -1,8 +1,7 @@
 from rest_framework import viewsets
-from .models import ModelPedido
-from .serializers import ModelPedidoSerializers
-
+from .serializers import ServicoSerializer
+from .models import Servico
 
 class ModelPedidoViewSet(viewsets.ModelViewSet):
-    queryset = ModelPedido.objects.all()
-    serializer_class = ModelPedidoSerializers
+    queryset = Servico.objects.all()
+    serializer_class = ServicoSerializer

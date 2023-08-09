@@ -29,7 +29,8 @@ INSTALLED_APPS = [
     'Cliente',
     'Afiliados',
     'Servicos',
-    'rest_framework'
+    'rest_framework',
+    'Pedidos',
 
 ]
 
