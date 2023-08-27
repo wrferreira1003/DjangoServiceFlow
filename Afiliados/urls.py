@@ -1,5 +1,6 @@
 from rest_framework.routers import DefaultRouter
-from .views import AfiliadosViewSet
+from django.urls import path
+from .views import AfiliadosViewSet, RegistrarAfiliadoView, LoginView,AfiliadosPublicosView
 
 app_name = 'Afiliados'
 
@@ -7,3 +8,11 @@ router = DefaultRouter(trailing_slash=False) #False para nao precisar colocar / 
 router.register(r'afiliado', AfiliadosViewSet)
 
 urlpatterns = router.urls
+
+
+urlpatterns = [
+    path('register/', RegistrarAfiliadoView.as_view(), name='register'),
+    path('login/', LoginView.as_view(), name='login'),
+    path('afiliados-publicos/', AfiliadosPublicosView.as_view(), name='afiliados-publicos'),
+    # ... outras URLs manuais se você tiver ...
+] + router.urls

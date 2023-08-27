@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import NovoCliente, NovoClienteEnvolvido, Documento
+from .models import NovoCliente, Documento
 
 @admin.register(NovoCliente)
 class NovoClienteModelAdmin(admin.ModelAdmin):
@@ -21,11 +21,20 @@ class NovoClienteModelAdmin(admin.ModelAdmin):
                    'data_pedido',
                    'afiliado',
                    'servico',
+                   'subservico',
+                   'nomeEnvolvido',
+                   'sobrenomeEnvolvido',
+                   'RegistroGeralEnvolvido',
+                   'cpfEnvolvido',
+                   'nomeCartorio',
+                   'estadoCartorio',
+                   'livroCartorio',
+                   'folhaCartorio',
+                    'nomeCartorioFirmaReconhecida',
+                    'estadoCartorioFirmaReconhecida',
+                    'livroCartorioFirmaReconhecida'
                    ]
     
-@admin.register(NovoClienteEnvolvido)
-class NovoClienteEnvolvidoModelAdmin(admin.ModelAdmin):
-    list_display= ['nome','sobrenome','RegistroGeral','cpf' ,'cliente' ]
 
 class DocumentoAdmin(admin.ModelAdmin):
     list_display = ['cliente', 'descricao', 'data_upload', 'arquivo']
