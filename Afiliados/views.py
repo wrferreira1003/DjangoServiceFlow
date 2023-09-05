@@ -9,6 +9,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import ListAPIView
 from rest_framework.decorators import action
 from django.contrib.auth.hashers import make_password, check_password
+from datetime import timezone
+from .decorators import check_token_last_login
+
+class TodosAfiliadosViewSet(viewsets.ModelViewSet):  # ReadOnly porque só queremos listar, sem criar, atualizar ou deletar
+    permission_classes = (IsAuthenticated,)
+    queryset = AfiliadosModel.objects.all()
+    serializer_class = AfiliadosModelSerializer
 
 #Mostro os dados
 class AfiliadosViewSet(viewsets.ModelViewSet):
@@ -75,9 +82,11 @@ class LoginView(APIView):
         if not afiliado.check_password(senha):
             return Response({"error": "Senha inválida."}, status=status.HTTP_401_UNAUTHORIZED)
    
+        
         # Se chegou aqui, as credenciais são válidas; gere o token
         refresh = RefreshToken.for_user(afiliado)
         access_token = str(refresh.access_token)
+
         # Serializar os dados do afiliado
         afiliado_data = AfiliadosModelSerializer(afiliado).data
 

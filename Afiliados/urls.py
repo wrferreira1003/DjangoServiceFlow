@@ -1,11 +1,12 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path
-from .views import AfiliadosViewSet, RegistrarAfiliadoView, LoginView,AfiliadosPublicosView
+from .views import AfiliadosViewSet, RegistrarAfiliadoView, LoginView,AfiliadosPublicosView,TodosAfiliadosViewSet
 
 app_name = 'Afiliados'
 
 router = DefaultRouter(trailing_slash=False) #False para nao precisar colocar / no final
 router.register(r'afiliado', AfiliadosViewSet)
+router.register(r'todos_afiliados', TodosAfiliadosViewSet, basename='todos_afiliados')
 
 urlpatterns = router.urls
 
