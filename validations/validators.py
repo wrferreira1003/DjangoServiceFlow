@@ -10,7 +10,7 @@ import os
 def validate_nome(value):
     if len(value) < 3:
         raise ValidationError('O nome deve ter pelo menos 3 caracteres.')
-    if not value.isalpha():
+    if not re.match("^[a-zA-Z\s]+$", value):
         raise ValidationError('O nome deve conter apenas letras.')
     
     return value.title()
@@ -44,23 +44,6 @@ def validate_cpf(value):
 
     if (not cpf) or (len(cpf) < 11):
         raise serializers.ValidationError("CPF inválido! Insira 11 dígitos.")
-
-    inteiros = list(map(int, cpf))
-    novo = inteiros[:9]
-
-    while len(novo) < 11:
-        r = sum([(len(novo)+1-i)*v for i,v in enumerate(novo)]) % 11
-
-        if r > 1:
-            f = 11 - r
-        else:
-            f = 0
-        novo.append(f)
-
-    if novo == inteiros:
-        return cpf
-    else:
-        raise serializers.ValidationError("CPF inválido! Os dígitos verificadores estão incorretos.")
 
 #Funcao para validacao de documentos
 def valida_file_extension(value):

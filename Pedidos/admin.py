@@ -3,7 +3,8 @@ from .models import NovoCliente, Documento
 
 @admin.register(NovoCliente)
 class NovoClienteModelAdmin(admin.ModelAdmin):
-    list_display= ['nome', 
+    list_display= [ 'idCliente',
+                    'nome', 
                    'sobrenome', 
                    'email', 
                    'telefone', 

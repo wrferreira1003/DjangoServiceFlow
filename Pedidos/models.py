@@ -18,6 +18,7 @@ class NovoCliente(models.Model):
   from Afiliados.models import AfiliadosModel
   from Servicos.models import Servico
 
+  idCliente = models.CharField(max_length=10)
   nome = models.CharField(max_length=100)
   sobrenome = models.CharField(max_length=100)
   email = models.EmailField() #unique=True Valor unico no banco de dados

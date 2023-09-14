@@ -140,9 +140,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIR = (os.path.join(BASE_DIR, 'templates/static'),)
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'templates/static'),)
 MEDIA_ROOT = os.path.join(BASE_DIR, 'documentos')
 MEDIA_URL = '/media/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') 
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -172,3 +173,11 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
     'TOKEN_TYPE_CLAIM': 'token_type',
 }
+
+#Configuração do EMAIL
+DEFAULT_FROM_EMAIL = 'wellington@wrferreiradevpro.com.br'
+EMAIL_HOST_USER = 'wellington@wrferreiradevpro.com.br'
+EMAIL_HOST_PASSWORD = 'Well#1003'
+EMAIL_USE_SSL = True  # A configuração SSL usa a porta 465
+EMAIL_PORT = 465
+EMAIL_HOST = 'smtp.kinghost.net'

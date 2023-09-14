@@ -9,8 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import ListAPIView
 from rest_framework.decorators import action
 from django.contrib.auth.hashers import make_password, check_password
-from datetime import timezone
-from .decorators import check_token_last_login
+
 
 class TodosAfiliadosViewSet(viewsets.ModelViewSet):  # ReadOnly porque só queremos listar, sem criar, atualizar ou deletar
     permission_classes = (IsAuthenticated,)
