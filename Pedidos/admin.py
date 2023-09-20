@@ -38,8 +38,8 @@ class NovoClienteModelAdmin(admin.ModelAdmin):
     
 
 class DocumentoAdmin(admin.ModelAdmin):
-    list_display = ['cliente', 'descricao', 'data_upload', 'arquivo']
-    search_fields = ['cliente__nome', 'descricao']  # Permite a pesquisa por nome do cliente e descrição do documento
+    list_display = ['id','cliente', 'descricao', 'data_upload', 'arquivo']
+    search_fields = ['cliente__idCliente', 'descricao']  # Permite a pesquisa por nome do cliente e descrição do documento
     list_filter = ['data_upload']  # Permite filtrar documentos por data de upload
 
 admin.site.register(Documento, DocumentoAdmin)

@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from .views import RegistrarClientesViewSet, TodosClientesViewSet,validate_account,verifica_cpf,verifica_email, LoginUserView
+from .views import RegistrarClientesViewSet, TodosClientesViewSet,validate_account,verifica_cpf,verifica_email, LoginUserView, AtualizaClienteViewSet
 from django.urls import path
 
 app_name = 'cliente'
@@ -9,6 +9,7 @@ router.register(r'user', TodosClientesViewSet)
 
 urlpatterns = [
   path('register/', RegistrarClientesViewSet.as_view(), name='register'),
+  path('atualiza/<int:pk>/', AtualizaClienteViewSet.as_view(), name='atualizar_cliente'),
   path('validate/', validate_account, name='validate'),
   path('cpf/<str:cpf>/', verifica_cpf),
   path('email/<str:email>/', verifica_email),

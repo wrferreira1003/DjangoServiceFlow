@@ -68,3 +68,6 @@ class Documento(models.Model):
     arquivo = models.FileField(upload_to='documentos/')
     descricao = models.CharField(max_length=255, blank=True, null=True)  # Uma descrição curta sobre o documento
     data_upload = models.DateTimeField(auto_now_add=True,blank=True, null=True)
+
+    def __str__(self):
+        return f"Documento {self.id}: {self.descricao}"

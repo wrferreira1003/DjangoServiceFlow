@@ -121,3 +121,62 @@ class UserSerializer(serializers.ModelSerializer):
                     'complemento',
                     'numero',
                 ]
+
+class AtualizaClienteSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Cliente
+        fields = [
+            'afiliado', 'nome', 'cpf', 'email', 'password', 'telefone', 
+            'telefone2', 'cep', 'estado', 'logradouro', 'bairro', 
+            'cidade', 'complemento', 'numero'
+        ]
+        extra_kwargs = {
+            'nome': {'required': False},
+            'password': {'required': False},
+            'telefone': {'required': False},
+            'cep': {'required': False},
+            'estado': {'required': False},
+            'logradouro': {'required': False},
+            'bairro': {'required': False},
+            'cidade': {'required': False},
+            'complemento': {'required': False},
+            'numero': {'required': False},
+            'cpf': {'required': False, 'validators': []},
+            'email': {'required': False, 'validators': []},
+        }
+    
+    def update(self, instance, validated_data):
+        # Se 'password' está nos dados validados, hash ele antes de salvar
+        if 'password' in validated_data:
+            validated_data['password'] = make_password(validated_data['password'])
+        
+        # Agora, atualize a instância com os dados validados
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        return instance
+    
+
+    def validate(self, attrs):
+        if self.instance:
+            if 'cpf' in attrs:
+                if attrs['cpf'] is not None and Cliente.objects.exclude(pk=self.instance.pk).filter(cpf=attrs['cpf']).exists():
+                    del attrs['cpf']
+            else:
+                attrs['cpf'] = self.instance.cpf
+
+            if 'email' in attrs:
+                if attrs['email'] is not None and Cliente.objects.exclude(pk=self.instance.pk).filter(email=attrs['email']).exists():
+                    del attrs['email']
+            else:
+                attrs['email'] = self.instance.email
+        else:
+            if attrs.get('cpf') is not None and Cliente.objects.filter(cpf=attrs.get('cpf')).exists():
+                raise serializers.ValidationError({"cpf": "Este CPF já está cadastrado."})
+
+            if attrs.get('email') is not None and Cliente.objects.filter(email=attrs.get('email')).exists():
+                raise serializers.ValidationError({"email": "Este e-mail já está cadastrado."})
+
+        return attrs
