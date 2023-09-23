@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import NovoClienteSerializer,DocumentoSerializer,DocumentoSerializerConsulta,NovoClienteSerializerConsulta
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -51,6 +52,7 @@ def criar_cliente_com_relacionados(request):
         print(f"Erro no serializer: {cliente_serializer.errors}")
         return Response(cliente_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+#Consultar os pedidos pelo id do cliente
 class NovoClienteDetailView(APIView):
 
     def get(self, request, id, format=None):
@@ -60,3 +62,15 @@ class NovoClienteDetailView(APIView):
             return Response(serializer.data)
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+#Consultar todos os pedidos, pelo painel do administrado.        
+
+
+class TodosClientesView(ListCreateAPIView):
+    queryset = NovoCliente.objects.all()
+    serializer_class = NovoClienteSerializerConsulta
+
+class ClienteDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = NovoCliente.objects.all()
+    serializer_class = NovoClienteSerializerConsulta
+    lookup_field = 'id'
