@@ -8,10 +8,11 @@ ESTADO_CIVIL_CHOICES = [
   ]
 
 STATUS_CHOICES = [
-    ('pendente', 'Pendente'),
-    ('em_analise', 'Em Analise'),
-    ('aprovado', 'Aprovado'),
-    ('recusado', 'Recusado'),
+    ('Pendente', 'Pendente'),
+    ('Em analise', 'Em Analise'),
+    ('Aprovado', 'Aprovado'),
+    ('Recusado', 'Recusado'),
+    ('Ajustar documentação', 'Ajustar documentação'),
   ]
 
 class NovoCliente(models.Model):
@@ -36,7 +37,7 @@ class NovoCliente(models.Model):
   cidade = models.CharField(max_length=100)
   bairro = models.CharField(max_length=100)
   cep = models.CharField(max_length=9)
-  status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='pendente')
+  status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pendente')
   data_pedido = models.DateTimeField(auto_now_add=True)
   afiliado = models.ForeignKey(AfiliadosModel, 
                             on_delete=models.SET_NULL, 
@@ -59,7 +60,8 @@ class NovoCliente(models.Model):
   nomeCartorioFirmaReconhecida = models.CharField(max_length=100, blank=True, null=True)
   estadoCartorioFirmaReconhecida = models.CharField(max_length=100, blank=True, null=True)
   livroCartorioFirmaReconhecida = models.CharField(max_length=100, blank=True, null=True)
-
+  Observacoes = models.CharField(max_length=2000, blank=True, null=True)
+  
   def __str__(self):
     return self.nome
 

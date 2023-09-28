@@ -3,7 +3,9 @@ from .models import NovoCliente, Documento
 
 @admin.register(NovoCliente)
 class NovoClienteModelAdmin(admin.ModelAdmin):
-    list_display= [ 'idCliente',
+    list_display= [ 'id',
+                    'idCliente',
+                    'status',
                     'nome', 
                    'sobrenome', 
                    'email', 
@@ -18,7 +20,6 @@ class NovoClienteModelAdmin(admin.ModelAdmin):
                    'cidade',
                    'bairro',
                    'cep',
-                   'status',
                    'data_pedido',
                    'afiliado',
                    'servico',
