@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'Pedidos',
     'corsheaders',
     'rest_framework_simplejwt',
+    'financeiro',
 
 ]
 

@@ -1,13 +1,12 @@
 from django.contrib import admin
-from .models import NovoCliente, Documento
+from .models import Processos, Documento
 
-@admin.register(NovoCliente)
+@admin.register(Processos)
 class NovoClienteModelAdmin(admin.ModelAdmin):
     list_display= [ 'id',
                     'idCliente',
                     'status',
                     'nome', 
-                   'sobrenome', 
                    'email', 
                    'telefone', 
                    'RegistroGeral', 

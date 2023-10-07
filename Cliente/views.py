@@ -108,3 +108,13 @@ class LoginUserView(APIView):
         cliente_data = UserSerializer(cliente).data
 
         return Response({"token": access_token, "user": cliente_data}, status=status.HTTP_200_OK)
+    
+
+@api_view(['GET'])
+def ListagemClienteCpf(request, cpf):
+    try:
+        cliente = Cliente.objects.get(cpf=cpf)
+        serializer = UserSerializer(cliente)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Cliente.DoesNotExist:
+        return Response({"message": "CPF não encontrado"}, status=status.HTTP_400_BAD_REQUEST)

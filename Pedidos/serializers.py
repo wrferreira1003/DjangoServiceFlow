@@ -1,10 +1,14 @@
 # serializers.py dentro do seu app
 from rest_framework import serializers
-from .models import NovoCliente, Documento
-from Afiliados.models import AfiliadosModel 
+from .models import Processos, Documento
+from Afiliados.models import AfiliadosModel
+from Cliente.models import Cliente
+from financeiro.models import Transacao
 from django.db import transaction
 from validacoes import validate_file_type, validate_file_size
 from datetime import datetime, date
+from Servicos.models import Servico
+from financeiro.models import Transacao
 import os
 
 class DocumentoSerializer(serializers.ModelSerializer):
@@ -13,23 +17,24 @@ class DocumentoSerializer(serializers.ModelSerializer):
         model = Documento
         fields = '__all__'
 
-class NovoClienteSerializer(serializers.ModelSerializer):
+class NovoPedidoSerializer(serializers.ModelSerializer):
     documentos = DocumentoSerializer(many=True, required=False)
 
     class Meta:
-        model = NovoCliente
+        model = Processos
         fields = '__all__'
         
     def create(self, validated_data):
         with transaction.atomic():
             documentos_data = validated_data.pop('documentos', [])
 
-            cliente = NovoCliente.objects.create(**validated_data)
+            processo = Processos.objects.create(**validated_data)
 
             for doc in documentos_data:
-                Documento.objects.create(cliente=cliente, **doc)
+                Documento.objects.create(cliente=processo, **doc)
 
-            return cliente
+            return processo
+
 
 class DocumentoSerializerConsulta(serializers.ModelSerializer):
     class Meta:
@@ -49,7 +54,7 @@ class NovoClienteSerializerConsulta(serializers.ModelSerializer):
     afiliado = AfiliadoSerializerConsulta(read_only=True)
     
     class Meta:
-        model = NovoCliente
+        model = Processos
         fields = '__all__'
     
     #Retorno apenas dados que tem valores    
@@ -58,7 +63,6 @@ class NovoClienteSerializerConsulta(serializers.ModelSerializer):
             'data_pedido': 'Data do Pedido',
             "idCliente": "Registro Cliente",
             "nome": "Nome",
-            "sobrenome": "Sobrenome",
             "email": "Email",
             "telefone": "Telefone",
             "RegistroGeral": "RG",
@@ -115,24 +119,37 @@ class NovoClienteSerializerConsulta(serializers.ModelSerializer):
 
         return {key: value for key, value in representation.items() if value not in [None, "", [], {}, "null"]}
 
+class ServicoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Servico
+        fields = '__all__' # Adicione outros campos se necessário
+
+class TransacaoSerializer(serializers.ModelSerializer):
+    servico = ServicoSerializer()
+    class Meta:
+        model = Transacao
+        fields = '__all__'
+
 class ClienteSerializerConsulta(serializers.ModelSerializer):
     documentos = DocumentoSerializerConsulta(many=True, source='documento_set', read_only=True)
     afiliado = AfiliadoSerializerConsulta(read_only=True)
-    
+    servicos = ServicoSerializer(read_only=True)
+    transacao = TransacaoSerializer(read_only=True) 
+
     class Meta:
-        model = NovoCliente
+        model = Processos
         fields = '__all__'
 
 class ClienteSerializerAlteracao(serializers.ModelSerializer):    
     class Meta:
-        model = NovoCliente
+        model = Processos
         fields = ['status']
 
 class AtualizaClienteSerializer(serializers.ModelSerializer):
     documentos = DocumentoSerializer(many=True, required=False)
 
     class Meta:
-        model = NovoCliente
+        model = Processos
         fields = '__all__'
         
     def update(self, instance, validated_data):
@@ -156,4 +173,4 @@ class AtualizaClienteSerializer(serializers.ModelSerializer):
 
             return instance
 
-    
+

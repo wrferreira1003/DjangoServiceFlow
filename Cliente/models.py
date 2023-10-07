@@ -6,18 +6,18 @@ class Cliente(models.Model):
     afiliado =models.ForeignKey(AfiliadosModel, on_delete=models.SET_NULL, null=True) #Caso o afiliado seja excluido o cliente que tem aquele afiliado fica null.
     nome = models.CharField(max_length=300)
     cpf = models.CharField(max_length=14, unique=True) # Para simplificar, estamos tratando
-    email = models.EmailField(unique=True)
-    password = models.CharField(max_length=100)
-    telefone = models.CharField(max_length=15)
+    email = models.EmailField(unique=True, null=True, blank=True)
+    password = models.CharField(max_length=100, null=True, blank=True)
+    telefone = models.CharField(max_length=15, null=True, blank=True)
     telefone2 = models.CharField(max_length=15, null=True, blank=True,)
     
-    cep = models.CharField(max_length=8)
-    estado = models.CharField(max_length=100)
-    logradouro = models.CharField(max_length=100)
-    bairro = models.CharField(max_length=100)
-    cidade = models.CharField(max_length=100)
-    complemento = models.CharField(max_length=300)
-    numero = models.IntegerField()
+    cep = models.CharField(max_length=8, null=True, blank=True)
+    estado = models.CharField(max_length=100, null=True, blank=True)
+    logradouro = models.CharField(max_length=100, null=True, blank=True)
+    bairro = models.CharField(max_length=100, null=True, blank=True)
+    cidade = models.CharField(max_length=100, null=True, blank=True)
+    complemento = models.CharField(max_length=300, null=True, blank=True)
+    numero = models.IntegerField(null=True, blank=True)
 
     is_validated = models.BooleanField(default=False)
     validation_token = models.CharField(max_length=255, unique=True, null=True, blank=True)

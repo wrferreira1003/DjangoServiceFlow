@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from .views import RegistrarClientesViewSet, TodosClientesViewSet,validate_account,verifica_cpf,verifica_email, LoginUserView, AtualizaClienteViewSet
+from .views import RegistrarClientesViewSet, TodosClientesViewSet,validate_account,verifica_cpf,verifica_email, LoginUserView, AtualizaClienteViewSet, ListagemClienteCpf
 from django.urls import path
 
 app_name = 'cliente'
@@ -14,4 +14,5 @@ urlpatterns = [
   path('cpf/<str:cpf>/', verifica_cpf),
   path('email/<str:email>/', verifica_email),
   path('loginuser/', LoginUserView.as_view(), name='loginuser'),
+  path('listcpf/<str:cpf>/', ListagemClienteCpf),
 ] +router.urls

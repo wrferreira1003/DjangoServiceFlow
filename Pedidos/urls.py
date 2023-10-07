@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from .views import criar_cliente_com_relacionados,NovoClienteDetailView,TodosClientesView,ClienteDetailView,TodosClientesViewSemFiltro,ClienteDetailViewAlteracao,AtualizaClienteView
+from .views import criar_cliente_com_relacionados,NovoClienteDetailView,TodosClientesView,ClienteDetailView,TodosClientesViewSemFiltro,ClienteDetailViewAlteracao,AtualizaClienteView,PedidosPorAfiliadoListView
 from django.urls import path
 
 app_name = 'pedidos'
@@ -16,5 +16,5 @@ urlpatterns = [
     path('deleterequest/<int:id>/', ClienteDetailView.as_view(), name='cliente-detail'),
     path('statusrequest/<int:id>/', ClienteDetailViewAlteracao.as_view(), name='cliente-Status_detail'),
     path('atualizarequest/<int:id>/', AtualizaClienteView, name='cliente-Atualiza'),
+    path('pedidos_por_afiliado/<int:afiliado_id>/', PedidosPorAfiliadoListView.as_view(), name='pedidos_por_afiliado'),
 ]
-

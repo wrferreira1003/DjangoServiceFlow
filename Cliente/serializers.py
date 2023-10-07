@@ -95,8 +95,15 @@ class ClienteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validation_token = generate_validation_token()
         validated_data['validation_token'] = validation_token
-        validated_data['password'] = make_password(validated_data.get('password'))
+        
+        # Verifica se o password é vazio ou None
+        password = validated_data.get('password')
+        if not password:
+            # Define o password como o CPF se estiver vazio
+            password = validated_data.get('cpf')
     
+        # Codifica o password usando make_password
+        validated_data['password'] = make_password(password)
         instance = super().create(validated_data)
     
         send_validation_email(instance.email, validation_token)
@@ -180,3 +187,46 @@ class AtualizaClienteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"email": "Este e-mail já está cadastrado."})
 
         return attrs
+    
+class ClienteExistenteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cliente
+        fields = [ 'id',
+                    'afiliado', 
+                    'nome', 
+                    'cpf',    
+                    'email', 
+                    'password',
+                    'telefone',
+                    'telefone2', 
+                    'cep',
+                    'estado',
+                    'logradouro',
+                    'bairro',
+                    'cidade',
+                    'complemento',
+                    'numero',
+                ]
+
+    #Removendo o campo password dos dados retornados
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data.pop('password', None)  # Remover o campo 'password' dos dados serializados
+        return data
+
+    def create(self, validated_data):
+        validation_token = generate_validation_token()
+        validated_data['validation_token'] = validation_token
+        
+        # Verifica se o password é vazio ou None
+        password = validated_data.get('password')
+        if not password:
+            # Define o password como o CPF se estiver vazio
+            password = validated_data.get('cpf')
+    
+        # Codifica o password usando make_password
+        validated_data['password'] = make_password(password)
+        instance = super().create(validated_data)
+    
+        send_validation_email(instance.email, validation_token)
+        return instance
