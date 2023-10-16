@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 from datetime import timedelta
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -10,12 +11,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-esrq10_9x%fk!epvm01vsw4v@=a=c&cgbveya#qe3r2z$&xul-'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=lambda v: [s.strip() for s in v.split(',')])
 
 CORS_ALLOW_ALL_ORIGINS = True
 
@@ -176,9 +177,9 @@ SIMPLE_JWT = {
 }
 
 #Configuração do EMAIL
-DEFAULT_FROM_EMAIL = 'wellington@wrferreiradevpro.com.br'
-EMAIL_HOST_USER = 'wellington@wrferreiradevpro.com.br'
-EMAIL_HOST_PASSWORD = 'Well#1003'
-EMAIL_USE_SSL = True  # A configuração SSL usa a porta 465
-EMAIL_PORT = 465
-EMAIL_HOST = 'smtp.kinghost.net'
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=True, cast=bool)
+EMAIL_PORT = config('EMAIL_PORT', default=465, cast=int)
+EMAIL_HOST = config('EMAIL_HOST')
