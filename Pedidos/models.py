@@ -21,7 +21,7 @@ class Processos(models.Model):
 
   idCliente = models.CharField(max_length=10, blank=True, null=True)
   nome = models.CharField(max_length=100, blank=True, null=True)
-  email = models.EmailField(blank=True, null=True) #unique=True Valor unico no banco de dados
+  email = models.EmailField(blank=True, null=True)
   telefone = models.CharField(max_length=15, blank=True, null=True) 
   RegistroGeral = models.CharField(max_length=20, blank=True, null=True)
   cpf = models.CharField(max_length=11, blank=True, null=True)
@@ -50,6 +50,16 @@ class Processos(models.Model):
   filiacao1 = models.CharField(max_length=100, blank=True, null=True)
   filiacao2 = models.CharField(max_length=100, blank=True, null=True)
 
+  conjugue1 = models.CharField(max_length=100, blank=True, null=True)
+  conjugue2 = models.CharField(max_length=100, blank=True, null=True)
+  data_casamento = models.DateField(blank=True, null=True)
+
+  data_inicial = models.DateField(blank=True, null=True)
+  data_final = models.DateField(blank=True, null=True)
+  
+  data_obito = models.DateField(blank=True, null=True)
+  nome_falecido = models.CharField(max_length=100, blank=True, null=True)
+
   nomeEnvolvido = models.CharField(max_length=100, blank=True, null=True)
   sobrenomeEnvolvido = models.CharField(max_length=100, blank=True, null=True)
   RegistroGeralEnvolvido = models.CharField(max_length=20, blank=True, null=True)
@@ -70,6 +80,10 @@ class Processos(models.Model):
   estadoCartorioFirmaReconhecida = models.CharField(max_length=100, blank=True, null=True)
   livroCartorioFirmaReconhecida = models.CharField(max_length=100, blank=True, null=True)
   Observacoes = models.CharField(max_length=2000, blank=True, null=True)
+
+  temFilhosMenores = models.CharField(max_length=5, blank=True, null=True)
+  temBens = models.CharField(max_length=5, blank=True, null=True)
+  filhoIncapaz = models.CharField(max_length=5, blank=True, null=True)
   
   def __str__(self):
     return self.nome

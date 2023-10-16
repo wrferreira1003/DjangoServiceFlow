@@ -46,3 +46,6 @@ class AfiliadosModel(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['nome']
 
     objects = AfiliadoManager()
+
+    def get_short_name(self):
+        return self.nome

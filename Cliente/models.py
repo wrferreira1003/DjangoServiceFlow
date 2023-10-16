@@ -3,10 +3,10 @@ from Afiliados.models import AfiliadosModel
 from django.contrib.auth.hashers import check_password
 
 class Cliente(models.Model):
-    afiliado =models.ForeignKey(AfiliadosModel, on_delete=models.SET_NULL, null=True) #Caso o afiliado seja excluido o cliente que tem aquele afiliado fica null.
+    afiliado =models.ForeignKey(AfiliadosModel, on_delete=models.SET_NULL, null=True, blank=True) #Caso o afiliado seja excluido o cliente que tem aquele afiliado fica null.
     nome = models.CharField(max_length=300)
     cpf = models.CharField(max_length=14, unique=True) # Para simplificar, estamos tratando
-    email = models.EmailField(unique=True, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
     password = models.CharField(max_length=100, null=True, blank=True)
     telefone = models.CharField(max_length=15, null=True, blank=True)
     telefone2 = models.CharField(max_length=15, null=True, blank=True,)
@@ -27,3 +27,4 @@ class Cliente(models.Model):
  
     def __str__(self):
         return self.nome
+

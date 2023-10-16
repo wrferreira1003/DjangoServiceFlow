@@ -35,7 +35,6 @@ class NovoPedidoSerializer(serializers.ModelSerializer):
 
             return processo
 
-
 class DocumentoSerializerConsulta(serializers.ModelSerializer):
     class Meta:
         model = Documento
@@ -62,7 +61,7 @@ class NovoClienteSerializerConsulta(serializers.ModelSerializer):
         FIELD_NAME_MAPPING = {
             'data_pedido': 'Data do Pedido',
             "idCliente": "Registro Cliente",
-            "nome": "Nome",
+            "nome": "Nome Solicitante",
             "email": "Email",
             "telefone": "Telefone",
             "RegistroGeral": "RG",
@@ -85,6 +84,27 @@ class NovoClienteSerializerConsulta(serializers.ModelSerializer):
             "nomeCartorioFirmaReconhecida": "Nome do Cartorio com Firma",
             "estadoCartorioFirmaReconhecida": "Estado do Cartorio com Firma",
             "livroCartorioFirmaReconhecida": "Livro do Cartorio com Firma",
+            "nomeCartorio": "Nome do Cartorio",
+            "estadoCartorio": "Estado do Cartório",
+            "cidadeCartorio": "Cidade do Cartório",
+            "livroCartorio":"Livro do Cartório",
+            "folhaCartorio": "Folha do Livro do Cartório",
+            "termo": "Termo",
+            "tipoDeEntrega": "Tipo de Entrega do Documento",
+            "FormaDePagamento": "Forma de Pagamento do Serviço",
+            "conjugue1":"Nome do primeiro cônjugue",
+            "conjugue2":"Nome do segundo cônjugue",
+            "data_casamento": "Data do casamento",
+            "data_obito": "Data do óbito",
+            "nome_falecido": "Nome do falecido",
+            "data_inicial": "Data inicial",
+            "data_final": "Data final",
+            "filiacao1": "Filiação 1",
+            "filiacao2": "Filiação 2",
+            "Observacoes": "Observação",
+            "temFilhosMenores":"Tem Filhos Menores",
+            "temBens":"Tem Bens Partilhar",
+            "filhoIncapaz":"Tem Filhos Incapaz",
             # adicione outros campos aqui conforme necessário
         }
         

@@ -26,7 +26,7 @@ class AfiliadosModelSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Se a password não for fornecida, definir password padrão
         if 'password' not in validated_data:
-            validated_data['password'] = 'Hcred@2023'
+            validated_data['password'] = validated_data.get('cnpj')
         
         password = validated_data.pop('password')
         afiliado = AfiliadosModel(**validated_data)

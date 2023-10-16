@@ -6,7 +6,7 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Processos
+from .models import Processos, Documento
 from Cliente.models import Cliente
 from Cliente.serializers import ClienteSerializer, ClienteExistenteSerializer
 from Servicos.models import Servico
@@ -35,7 +35,14 @@ def criar_ou_atualizar_cliente(data):
 def criar_transacao(cliente_data,processo_obj, servico_id):
     try:
         cliente_instance = Cliente.objects.get(id=cliente_data.get('id'))
-        afiliado_instance = AfiliadosModel.objects.get(id=cliente_data.get('afiliado'))
+        
+        #afiliado_instance = AfiliadosModel.objects.get(id=cliente_data.get('afiliado'))
+        afiliado_id = cliente_data.get('afiliado')
+        if afiliado_id:
+            afiliado_instance = AfiliadosModel.objects.get(id=afiliado_id)
+        else:
+            afiliado_instance = None
+        
         pedido_instance = Processos.objects.get(id=processo_obj.id)
         servico_instance = Servico.objects.get(pk=servico_id)
 
@@ -55,7 +62,6 @@ def criar_transacao(cliente_data,processo_obj, servico_id):
     except Servico.DoesNotExist:
         print("erro")
         return None  # O serviço com o ID fornecido não existe.
-
 
 @api_view(['POST'])
 def criar_cliente_com_relacionados(request):
@@ -202,3 +208,25 @@ class PedidosPorAfiliadoListView(generics.ListAPIView):
         """
         afiliado_id = self.kwargs['afiliado_id']
         return Processos.objects.filter(afiliado__id=afiliado_id)
+    
+class PedidosPorClienteListView(generics.ListAPIView):
+    serializer_class = ClienteSerializerConsulta
+
+    def get_queryset(self):
+        """
+        Este método irá retornar uma lista de pedidos para o afiliado especificado.
+        O afiliado é determinado pelo `id` passado na URL.
+        """
+        cliente_id = self.kwargs['idCliente']
+        return Processos.objects.filter(idCliente=cliente_id)
+    
+@api_view(['DELETE'])
+def delete_documento_api(request, documento_id):
+    try:
+        documento = Documento.objects.get(id=documento_id)
+    except Documento.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == "DELETE":
+        documento.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -18,7 +18,6 @@ class TodosAfiliadosViewSet(viewsets.ModelViewSet):  # ReadOnly porque só quere
 
 #Mostro os dados
 class AfiliadosViewSet(viewsets.ModelViewSet):
-    print("passou por aqui")
     permission_classes = (IsAuthenticated,)
 
     queryset = AfiliadosModel.objects.all()

@@ -6,6 +6,7 @@ import uuid
 from django.core.mail import send_mail
 from django.conf import settings
 from urllib.parse import urlencode
+from Afiliados.models import AfiliadosModel
 
 link = 'http://127.0.0.1:8000/api/'
 src = 'http://127.0.0.1:8000/static/img/logo.png'
@@ -74,7 +75,7 @@ class ClienteSerializer(serializers.ModelSerializer):
     email = serializers.CharField(validators=[validate_email])
     telefone = serializers.CharField(validators=[validate_telefone])
     cpf = serializers.CharField(validators=[validate_cpf])
-
+ 
     #Removendo o campo password dos dados retornados
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -82,10 +83,10 @@ class ClienteSerializer(serializers.ModelSerializer):
         return data
     
     #Validação customizada no serializer para verificar se o e-mail já existe no banco de dados. 
-    def validate_email(self, value):
-        if Cliente.objects.filter(email=value).exists():
-            raise serializers.ValidationError('E-mail já está em uso')
-        return value
+    # def validate_email(self, value):
+    #    if Cliente.objects.filter(email=value).exists():
+    #        raise serializers.ValidationError('E-mail já está em uso')
+    #    return value
     
     def validate_cpf(self, value):
         if Cliente.objects.filter(cpf=value).exists():
