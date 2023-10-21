@@ -8,8 +8,8 @@ from django.conf import settings
 from urllib.parse import urlencode
 from Afiliados.models import AfiliadosModel
 
-link = 'http://127.0.0.1:8000/api/'
-src = 'http://127.0.0.1:8000/static/img/logo.png'
+link = 'https://rcfacil.cloud/api/'
+src = 'https://rcfacil.cloud/static/logo.png'
 
 #Funcao que gera um token unico para o cliente
 def generate_validation_token():
@@ -106,8 +106,10 @@ class ClienteSerializer(serializers.ModelSerializer):
         # Codifica o password usando make_password
         validated_data['password'] = make_password(password)
         instance = super().create(validated_data)
-    
+
+        #Envia email ao cliente
         send_validation_email(instance.email, validation_token)
+        
         return instance
 
 
