@@ -12,6 +12,10 @@ from Cliente.serializers import ClienteSerializer, ClienteExistenteSerializer
 from Servicos.models import Servico
 from financeiro.models import Transacao
 from Afiliados.models import AfiliadosModel
+import logging
+import json
+
+logger = logging.getLogger('django')
 
 #Funcao que cria ou atualiza um novo cliente na hora que uma nova solicitacao e feita.
 def criar_ou_atualizar_cliente(data):
@@ -33,6 +37,7 @@ def criar_ou_atualizar_cliente(data):
     return None, False
 
 def criar_transacao(cliente_data,processo_obj, servico_id):
+    logger.info("Iniciando a criação de uma transacao...")
     try:
         cliente_instance = Cliente.objects.get(id=cliente_data.get('id'))
         
@@ -58,73 +63,84 @@ def criar_transacao(cliente_data,processo_obj, servico_id):
             "FormaDePagamento": processo_obj.FormaDePagamento,  # você pode definir isso conforme necessário
             "status": "PENDENTE"
         }
+        logger.info(transacao_data)
+
         return Transacao.objects.create(**transacao_data)
-    except Servico.DoesNotExist:
-        print("erro")
-        return None  # O serviço com o ID fornecido não existe.
+    except Exception as e:
+        logger.error(f"Erro ao criar transação: {e}")
+        return None
 
 @api_view(['POST'])
 def criar_cliente_com_relacionados(request):
-    data = request.data.copy()  # Mudança aqui
-    files = request.FILES
-    
-    documentos_data = []
-
-    # Captura todos os documentos enviados
-    for key, arquivo in files.items():
-        if key.startswith('documentos'):
-            index = key.split('[')[1].split(']')[0]  # pegar o índice dos documentos
-            descricao = data.get(f'documentos[{index}].descricao')
-            documentos_data.append({
-                'descricao': descricao,
-                'arquivo': arquivo
-            })
-    
-    # Remover campos de documentos do data original para evitar problemas com o serializador
-    for key in list(data.keys()):
-        if key.startswith('documentos'):
-            del data[key]
-
-    # Incluindo os documentos processados na data
-    data['documentos'] = documentos_data
-    
-
-    # Chamada para a função que cria ou atualiza o cliente
-    cliente_data, is_new = criar_ou_atualizar_cliente(data)
-    if not cliente_data:
-        print("Erro ao criar ou atualizar cliente",status=status.HTTP_400_BAD_REQUEST)
-        return Response({"error": "Erro ao criar ou atualizar cliente."}, status=status.HTTP_400_BAD_REQUEST)
-    # Vamos testar a validação dos documentos aqui
-    doc_serializer = DocumentoSerializer(data=documentos_data, many=True)
-    if doc_serializer.is_valid():
-        print("Documentos validados corretamente!")
-    else:
-        print("Erro na validação dos documentos:", doc_serializer.errors)
-
-   
-    processo_serializer = NovoPedidoSerializer(data=data)
-
-
-    if processo_serializer.is_valid():
-        processo_serializer.validated_data['documentos'] = documentos_data
-
-        # Aqui você atualiza o validated_data com o ID do cliente antes de salvar o processo.
-        processo_serializer.validated_data['idCliente'] = cliente_data['id']  # ou cliente_data.id se for um objeto
-
-        processo_obj = processo_serializer.save()
-
-        # Agora, vamos criar a transação associada a esse cliente
-        servico_id = data.get('servico')  # você mencionou que passa o id do serviço
+    logger.info("Iniciando a criação do cliente e relacionados...")
+    try:
+        data = request.data.copy()  # Mudança aqui
+        files = request.FILES
         
-        transacao_obj = criar_transacao(cliente_data,processo_obj, servico_id,)
+        documentos_data = []
 
-        if not transacao_obj:
-            # Handle error. O serviço com o ID fornecido não existe.
-            return Response({"error": "Serviço não encontrado."}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(processo_serializer.data, status=status.HTTP_201_CREATED)
-    else:
-        print(f"Erro no serializer: {processo_serializer.errors}")
-        return Response(processo_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Captura todos os documentos enviados
+        for key, arquivo in files.items():
+            if key.startswith('documentos'):
+                index = key.split('[')[1].split(']')[0]  # pegar o índice dos documentos
+                descricao = data.get(f'documentos[{index}].descricao')
+                documentos_data.append({
+                    'descricao': descricao,
+                    'arquivo': arquivo
+                })
+        
+        # Remover campos de documentos do data original para evitar problemas com o serializador
+        for key in list(data.keys()):
+            if key.startswith('documentos'):
+                del data[key]
+
+        # Incluindo os documentos processados na data
+        data['documentos'] = documentos_data
+        
+
+        # Chamada para a função que cria ou atualiza o cliente
+        cliente_data, is_new = criar_ou_atualizar_cliente(data)
+        if not cliente_data:
+            logger.error("Erro ao criar ou atualizar cliente.")
+            return Response({"error": "Erro ao criar ou atualizar cliente."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Vamos testar a validação dos documentos aqui
+        doc_serializer = DocumentoSerializer(data=documentos_data, many=True)
+        if doc_serializer.is_valid():
+            logger.info("Documentos validados corretamente!")
+        else:
+            logger.error(f"Erro na validação dos documentos: {doc_serializer.errors}")
+
+    
+        processo_serializer = NovoPedidoSerializer(data=data)
+
+
+        if processo_serializer.is_valid():
+            processo_serializer.validated_data['documentos'] = documentos_data
+
+            # Aqui você atualiza o validated_data com o ID do cliente antes de salvar o processo.
+            processo_serializer.validated_data['idCliente'] = cliente_data['id']  # ou cliente_data.id se for um objeto
+
+            processo_obj = processo_serializer.save()
+
+            # Agora, vamos criar a transação associada a esse cliente
+            servico_id = data.get('servico')  # você mencionou que passa o id do serviço
+            
+            transacao_obj = criar_transacao(cliente_data,processo_obj, servico_id,)
+
+            if not transacao_obj:
+                logger.error("Erro ao criar transação. Serviço não encontrado.")
+                return Response({"error": "Serviço não encontrado."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response(processo_serializer.data, status=status.HTTP_201_CREATED)
+        
+        else:
+            logger.error(f"Erro no serializer: {processo_serializer.errors}")
+            return Response(processo_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    except Exception as e:
+        logger.exception(f"Erro inesperado na função criar_cliente_com_relacionados: {e}")
+        return Response({"error": "Erro interno do servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 #Consultar os pedidos pelo id do cliente
 class NovoClienteDetailView(APIView):

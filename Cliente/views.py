@@ -80,7 +80,10 @@ def validate_account(request):
         user.is_validated = True
         user.save()
         # E-mail validado com sucesso, renderizando página com mensagem de sucesso
-        return render(request, 'cliente/sucesso.html', {'message': 'Seu e-mail foi validado com sucesso!'})
+        return render(request, 'cliente/sucesso.html', {
+                                'message': 'Seu e-mail foi validado com sucesso! ',
+                                'link_url': 'https://service-frontend-scred.vercel.app/user/acess'
+})
     except ObjectDoesNotExist:
         # Token não encontrado, renderizando página com mensagem de erro
         return render(request, 'cliente/erro.html', {'message': 'Ocorreu um erro ao validar seu e-mail. O token pode ser inválido ou ter expirado.'})
