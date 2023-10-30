@@ -65,7 +65,6 @@ class AtualizaClienteViewSet(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 #verifica o token e, se válido, ativa a conta do usuário.
 @api_view(['GET'])
 def validate_account(request):
@@ -89,10 +88,11 @@ def validate_account(request):
         return render(request, 'cliente/erro.html', {'message': 'Ocorreu um erro ao validar seu e-mail. O token pode ser inválido ou ter expirado.'})
 
 class LoginUserView(APIView):
-
+   
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("senha")
+     
         try:
             cliente = Cliente.objects.get(email=email)
         except Cliente.DoesNotExist:
@@ -102,7 +102,7 @@ class LoginUserView(APIView):
         if not cliente.check_password(password):
             return Response({"error": "Senha inválida."}, status=status.HTTP_401_UNAUTHORIZED)
    
-        
+ 
         # Se chegou aqui, as credenciais são válidas; gere o token
         refresh = RefreshToken.for_user(cliente)
         access_token = str(refresh.access_token)
@@ -112,7 +112,6 @@ class LoginUserView(APIView):
 
         return Response({"token": access_token, "user": cliente_data}, status=status.HTTP_200_OK)
     
-
 @api_view(['GET'])
 def ListagemClienteCpf(request, cpf):
     try:

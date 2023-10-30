@@ -10,12 +10,14 @@ from rest_framework.generics import ListAPIView
 from rest_framework.decorators import action
 from django.contrib.auth.hashers import make_password, check_password
 
-
+#Lista todos os Afiliados do Banco de dados
 class TodosAfiliadosViewSet(viewsets.ModelViewSet):  # ReadOnly porque só queremos listar, sem criar, atualizar ou deletar
     permission_classes = (IsAuthenticated,)
-    queryset = AfiliadosModel.objects.all()
     serializer_class = AfiliadosModelSerializer
 
+    def get_queryset(self):
+        return AfiliadosModel.objects.filter(user_type='AFILIADO')
+    
 #Mostro os dados
 class AfiliadosViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
@@ -70,7 +72,7 @@ class LoginView(APIView):
     def post(self, request):
         email = request.data.get("email")
         senha = request.data.get("senha")
-
+   
         try:
             afiliado = AfiliadosModel.objects.get(email=email)
         except AfiliadosModel.DoesNotExist:
