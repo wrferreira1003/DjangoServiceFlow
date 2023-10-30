@@ -31,7 +31,7 @@ class AfiliadosModel(AbstractBaseUser, PermissionsMixin):
     estado = models.CharField(max_length=200)
     cep = models.CharField(max_length=9, verbose_name="CEP")
     foto = models.ImageField(upload_to='afiliados_fotos/', blank=True, null=True)
-
+    
     USER_TYPE_CHOICES = (
         ('AFILIADO', 'Afiliado'),
         ('ADMIN', 'Administrador'),

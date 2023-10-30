@@ -6,7 +6,7 @@ class Cliente(models.Model):
     afiliado =models.ForeignKey(AfiliadosModel, on_delete=models.SET_NULL, null=True, blank=True) #Caso o afiliado seja excluido o cliente que tem aquele afiliado fica null.
     nome = models.CharField(max_length=300)
     cpf = models.CharField(max_length=14, unique=True) # Para simplificar, estamos tratando
-    email = models.EmailField(null=True, blank=True)
+    email = models.EmailField(null=True, blank=True, unique=True)
     password = models.CharField(max_length=100, null=True, blank=True)
     telefone = models.CharField(max_length=15, null=True, blank=True)
     telefone2 = models.CharField(max_length=15, null=True, blank=True,)
