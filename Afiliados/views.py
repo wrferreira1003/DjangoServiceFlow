@@ -56,8 +56,7 @@ class AfiliadosViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Senha atualizada com sucesso!"}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
+    
 class RegistrarAfiliadoView(APIView):
     def post(self, request):
         serializer = AfiliadosModelSerializer(data=request.data)
@@ -66,7 +65,6 @@ class RegistrarAfiliadoView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class LoginView(APIView):
     def post(self, request):
@@ -93,6 +91,13 @@ class LoginView(APIView):
         return Response({"token": access_token, "afiliado": afiliado_data}, status=status.HTTP_200_OK)
     
 class AfiliadosPublicosView(ListAPIView):
-    queryset = AfiliadosModel.objects.filter(user_type='AFILIADO')
     serializer_class = AfiliadosPublicosSerializer
+
+    def get_queryset(self):
+        queryset = AfiliadosModel.objects.filter(user_type='AFILIADO')
+        estado = self.kwargs.get('estado')
+        if estado:
+            queryset = queryset.filter(estado=estado)
+        return queryset
+    
     
