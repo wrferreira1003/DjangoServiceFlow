@@ -49,8 +49,7 @@ class RegistrarClientesViewSet(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    
+  
 class AtualizaClienteViewSet(APIView):
     def put(self, request, pk=None):
         try:
@@ -64,7 +63,6 @@ class AtualizaClienteViewSet(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 #verifica o token e, se válido, ativa a conta do usuário.
 @api_view(['GET'])
 def validate_account(request):

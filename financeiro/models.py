@@ -14,9 +14,14 @@ class Transacao(models.Model):
     FormaDePagamento = models.CharField(max_length=100, blank=True, null=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
     data_atualizacao = models.DateTimeField(auto_now=True)
-    
+    Observacoes = models.CharField(max_length=2000, blank=True, null=True)
+    comprovante = models.FileField(upload_to='comprovantesPagamento/', blank=True, null=True)
+    linkpagamento = models.CharField(max_length=200, blank=True, null=True)
     status = models.CharField(
-    choices=[('PENDENTE', 'Pendente de Pagamento'), ('PAGO', 'Pago')],
+    choices=[('PENDENTE', 'Pendente de Pagamento'), 
+             ('PAGO', 'Pago'),
+             ('AGUARDANDO', 'Aguardando Confirmação'), 
+            ],
     max_length=20,
     default='PENDENTE'
     )
