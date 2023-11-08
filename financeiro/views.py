@@ -10,7 +10,6 @@ class ModelFinanceiroViewSet(viewsets.ModelViewSet):
 
 #Alteracao de informacoes no banco de dados
 class ClienteDetailViewAlteracaoPagamento(UpdateAPIView):
-    permission_classes = (IsAuthenticated,)
     queryset = Transacao.objects.all()
     serializer_class = ClienteSerializerAlteracao
     lookup_field = 'pedido__id'

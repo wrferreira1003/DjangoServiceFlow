@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group, Permission
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -35,6 +35,7 @@ class AfiliadosModel(AbstractBaseUser, PermissionsMixin):
     USER_TYPE_CHOICES = (
         ('AFILIADO', 'Afiliado'),
         ('ADMIN', 'Administrador'),
+        ('FUNC', 'Funcionario'),
     )
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='AFILIADO')
 
