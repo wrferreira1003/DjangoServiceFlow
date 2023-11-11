@@ -1,4 +1,4 @@
-from .serializers import AfiliadosModelSerializer, AfiliadosPublicosSerializer, ChangePasswordSerializer
+from .serializers import AfiliadosModelSerializer, AfiliadosPublicosSerializer, ChangePasswordSerializer, FuncionarioSerializerFuncionarios
 from rest_framework import viewsets
 from .models import AfiliadosModel
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -100,4 +100,15 @@ class AfiliadosPublicosView(ListAPIView):
             queryset = queryset.filter(estado=estado)
         return queryset
     
-    
+class FuncionariosPorAfiliadoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, afiliado_id):
+        try:
+            afiliado = AfiliadosModel.objects.get(id=afiliado_id)
+            funcionarios = afiliado.funcionarios.all()
+            serializer = FuncionarioSerializerFuncionarios(funcionarios, many=True)
+            return Response(serializer.data)
+        except AfiliadosModel.DoesNotExist:
+            return Response({"error": "Afiliado não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+

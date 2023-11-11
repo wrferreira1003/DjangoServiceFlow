@@ -20,9 +20,9 @@ class AfiliadoManager(BaseUserManager):
     
 class AfiliadosModel(AbstractBaseUser, PermissionsMixin):   
     nome = models.CharField(max_length=100)
-    razao_social = models.CharField(max_length=100)
-    cnpj = models.CharField(max_length=14,
-                                  unique=True)
+    razao_social = models.CharField(max_length=100, null=True, blank=True)
+    cnpj = models.CharField(max_length=14, unique=True, null=True, blank=True)
+    cpf = models.CharField(max_length=11, unique=True, null=True, blank=True)
     email = models.EmailField(unique=True)
     telefone = models.CharField(max_length=15)
     endereco = models.CharField(max_length=200)
@@ -39,6 +39,17 @@ class AfiliadosModel(AbstractBaseUser, PermissionsMixin):
     )
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='AFILIADO')
 
+    #Esse campo so é relevante quando o usuario for um funcionario
+    afiliado_relacionado = models.ForeignKey(
+        'self', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='funcionarios',
+        help_text='Afiliado ao qual o funcionário está associado',
+        limit_choices_to={'user_type': 'AFILIADO'},  # Limita as escolhas a usuários do tipo AFILIADO
+    )
+
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     last_login = models.DateTimeField(null=True, blank=True)
@@ -47,6 +58,39 @@ class AfiliadosModel(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['nome']
 
     objects = AfiliadoManager()
+
+    def save(self, *args, **kwargs):
+         # Verificações para CPF e CNPJ
+        if self.user_type == 'FUNC':
+            if not self.cpf:
+                raise ValueError("Um funcionário deve ter um CPF.")
+            self.cnpj = None  # Garantir que CNPJ não seja definido para funcionários
+        elif self.user_type == 'AFILIADO':
+            if not self.cnpj:
+                raise ValueError("Um afiliado deve ter um CNPJ.")
+            self.cpf = None  # Garantir que CPF não seja definido para afiliados
+
+            
+        # Verifica se o objeto é um funcionário e se está associado a um afiliado
+        if self.user_type == 'FUNC' and self.afiliado_relacionado:
+            # Conta quantos funcionários o afiliado relacionado já tem
+            funcionarios_count = AfiliadosModel.objects.filter(
+                afiliado_relacionado=self.afiliado_relacionado, 
+                user_type='FUNC'
+            ).count()
+            # Se o afiliado já tem 5 ou mais funcionários, impede a criação de mais um
+            if funcionarios_count >= 5:
+                raise ValueError("Um afiliado não pode ter mais de 5 funcionários cadastrados.")
+
+        # Certifique-se de que um afiliado não possa ser associado a outro afiliado
+        if self.user_type == 'AFILIADO' and self.afiliado_relacionado is not None:
+            raise ValueError("Um afiliado não pode ser afiliado de outro afiliado.")
+        
+        # Se o usuário é um funcionário, certifique-se de que ele esteja sendo associado a um afiliado
+        if self.user_type == 'FUNC' and self.afiliado_relacionado is None:
+            raise ValueError("Um funcionário deve estar associado a um afiliado.")
+
+        super(AfiliadosModel, self).save(*args, **kwargs)
 
     def get_short_name(self):
         return self.nome
