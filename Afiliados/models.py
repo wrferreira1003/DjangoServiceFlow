@@ -80,7 +80,7 @@ class AfiliadosModel(AbstractBaseUser, PermissionsMixin):
             ).count()
             # Se o afiliado já tem 5 ou mais funcionários, impede a criação de mais um
             if funcionarios_count >= 5:
-                raise ValueError("Um afiliado não pode ter mais de 5 funcionários cadastrados.")
+                raise ValueError("Quantidade permitida de funcionários ja atingido.")
 
         # Certifique-se de que um afiliado não possa ser associado a outro afiliado
         if self.user_type == 'AFILIADO' and self.afiliado_relacionado is not None:

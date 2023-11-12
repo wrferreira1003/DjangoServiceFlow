@@ -18,6 +18,12 @@ class TodosAfiliadosViewSet(viewsets.ModelViewSet):  # ReadOnly porque só quere
     def get_queryset(self):
         return AfiliadosModel.objects.filter(user_type='AFILIADO')
     
+    def create(self, request, *args, **kwargs):
+        try:
+            return super(TodosAfiliadosViewSet, self).create(request, *args, **kwargs)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
 #Mostro os dados
 class AfiliadosViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
