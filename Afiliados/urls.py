@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
-from django.urls import path
-from .views import AfiliadosViewSet, RegistrarAfiliadoView, LoginView,AfiliadosPublicosView,TodosAfiliadosViewSet
+from django.urls import path, re_path
+from .views import AfiliadosViewSet, RegistrarAfiliadoView, LoginView,AfiliadosPublicosView,TodosAfiliadosViewSet,FuncionariosPorAfiliadoView
 
 app_name = 'Afiliados'
 
@@ -14,6 +14,7 @@ urlpatterns = router.urls
 urlpatterns = [
     path('register/', RegistrarAfiliadoView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
-    path('afiliados-publicos/', AfiliadosPublicosView.as_view(), name='afiliados-publicos'),
+    path('afiliados/<int:afiliado_id>/funcionarios/', FuncionariosPorAfiliadoView.as_view(), name='funcionarios-por-afiliado'),
+    re_path('afiliados-publicos/(?P<estado>[A-Z]{2})?/$', AfiliadosPublicosView.as_view(), name='afiliados-publicos'),
     # ... outras URLs manuais se você tiver ...
 ] + router.urls

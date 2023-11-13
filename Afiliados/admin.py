@@ -3,7 +3,11 @@ from .models import AfiliadosModel
 
 @admin.register(AfiliadosModel)
 class AfiliadosModelAdmin(admin.ModelAdmin):
-    list_display= ['id','nome', 'razao_social', 'cnpj', 'email', 
+    list_display= ['get_cpf_cnpj','id','nome', 'razao_social','email', 
                    'telefone', 'endereco' ,'bairro', 'cidade',
-                   'estado', 'cep']
+                   'estado', 'cep', 'afiliado_relacionado']
+    
+    def get_cpf_cnpj(self, obj):
+        return obj.cnpj if obj.user_type == 'AFILIADO' else obj.cpf
+    get_cpf_cnpj.short_description = 'CPF/CNPJ'  # Define o título da coluna
 

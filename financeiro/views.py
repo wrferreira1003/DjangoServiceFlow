@@ -2,6 +2,7 @@ from rest_framework import viewsets
 from .models import Transacao
 from .serializers import TransacaoSerializer, ClienteSerializerAlteracao
 from rest_framework.generics import UpdateAPIView
+from rest_framework.permissions import IsAuthenticated
 
 class ModelFinanceiroViewSet(viewsets.ModelViewSet):
   queryset = Transacao.objects.all()

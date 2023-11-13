@@ -21,13 +21,18 @@ class AfiliadosModelSerializer(serializers.ModelSerializer):
                 'foto',
                 'user_type',
                 'last_login',
+                'afiliado_relacionado',
+                'cpf',
                 ]  # Lista todos os campos, exceto a senha
 
     def create(self, validated_data):
         # Se a password não for fornecida, definir password padrão
-        if 'password' not in validated_data:
-            validated_data['password'] = validated_data.get('cnpj')
-        
+        if 'password' not in validated_data or validated_data['password'] in [None, '']:
+            if validated_data.get('user_type') == 'AFILIADO':
+                validated_data['password'] = validated_data.get('cnpj', 'rcfacil2024')
+            elif validated_data.get('user_type') == 'FUNC':
+                validated_data['password'] = validated_data.get('cpf', 'rcfacil2024')
+            
         password = validated_data.pop('password')
         afiliado = AfiliadosModel(**validated_data)
         afiliado.set_password(password)  # Use o método set_password para armazenar a senha de forma segura
@@ -54,3 +59,20 @@ class AfiliadosPublicosSerializer(serializers.ModelSerializer):
             'cnpj',
 
         ]
+
+class FuncionarioSerializerFuncionarios(serializers.ModelSerializer):
+    class Meta:
+        model = AfiliadosModel
+        fields = ['id', 
+                  'nome', 
+                  'email', 
+                  'telefone', 
+                  'endereco', 
+                  'bairro', 
+                  'cidade', 
+                  'estado', 
+                  'cep', 
+                  'cpf', 
+                  'foto',
+                  'last_login',
+                  ]

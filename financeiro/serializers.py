@@ -9,4 +9,4 @@ class TransacaoSerializer(serializers.ModelSerializer):
 class ClienteSerializerAlteracao(serializers.ModelSerializer):    
     class Meta:
         model = Transacao
-        fields = ['status']
+        fields = '__all__'

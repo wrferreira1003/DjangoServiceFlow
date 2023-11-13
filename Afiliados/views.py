@@ -1,4 +1,4 @@
-from .serializers import AfiliadosModelSerializer, AfiliadosPublicosSerializer, ChangePasswordSerializer
+from .serializers import AfiliadosModelSerializer, AfiliadosPublicosSerializer, ChangePasswordSerializer, FuncionarioSerializerFuncionarios
 from rest_framework import viewsets
 from .models import AfiliadosModel
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -17,6 +17,12 @@ class TodosAfiliadosViewSet(viewsets.ModelViewSet):  # ReadOnly porque só quere
 
     def get_queryset(self):
         return AfiliadosModel.objects.filter(user_type='AFILIADO')
+    
+    def create(self, request, *args, **kwargs):
+        try:
+            return super(TodosAfiliadosViewSet, self).create(request, *args, **kwargs)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
 #Mostro os dados
 class AfiliadosViewSet(viewsets.ModelViewSet):
@@ -56,8 +62,7 @@ class AfiliadosViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Senha atualizada com sucesso!"}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
+    
 class RegistrarAfiliadoView(APIView):
     def post(self, request):
         serializer = AfiliadosModelSerializer(data=request.data)
@@ -66,7 +71,6 @@ class RegistrarAfiliadoView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class LoginView(APIView):
     def post(self, request):
@@ -93,6 +97,24 @@ class LoginView(APIView):
         return Response({"token": access_token, "afiliado": afiliado_data}, status=status.HTTP_200_OK)
     
 class AfiliadosPublicosView(ListAPIView):
-    queryset = AfiliadosModel.objects.filter(user_type='AFILIADO')
     serializer_class = AfiliadosPublicosSerializer
+
+    def get_queryset(self):
+        queryset = AfiliadosModel.objects.filter(user_type='AFILIADO')
+        estado = self.kwargs.get('estado')
+        if estado:
+            queryset = queryset.filter(estado=estado)
+        return queryset
     
+class FuncionariosPorAfiliadoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, afiliado_id):
+        try:
+            afiliado = AfiliadosModel.objects.get(id=afiliado_id)
+            funcionarios = afiliado.funcionarios.all()
+            serializer = FuncionarioSerializerFuncionarios(funcionarios, many=True)
+            return Response(serializer.data)
+        except AfiliadosModel.DoesNotExist:
+            return Response({"error": "Afiliado não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+

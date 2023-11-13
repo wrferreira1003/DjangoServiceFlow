@@ -14,7 +14,7 @@ class TransacaoNovoClienteModelAdmin(admin.ModelAdmin):
                     'servico',
                     'pedido',
                     'preco',
-                    'status',
+                    'statusPagamento',
                     'FormaDePagamento',
                     'data_criacao',
                     'data_atualizacao'

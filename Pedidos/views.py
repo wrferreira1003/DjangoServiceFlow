@@ -40,7 +40,7 @@ def criar_transacao(cliente_data,processo_obj, servico_id):
     logger.info("Iniciando a criação de uma transacao...")
     try:
         cliente_instance = Cliente.objects.get(id=cliente_data.get('id'))
-        
+
         #afiliado_instance = AfiliadosModel.objects.get(id=cliente_data.get('afiliado'))
         afiliado_id = cliente_data.get('afiliado')
         if afiliado_id:
@@ -61,7 +61,7 @@ def criar_transacao(cliente_data,processo_obj, servico_id):
             "pedido": pedido_instance,  # Assumindo que a relação OneToOne entre Processos e Transacao é essa
             "preco": preco,  # Supondo que o modelo Servico tenha um campo chamado "valor"
             "FormaDePagamento": processo_obj.FormaDePagamento,  # você pode definir isso conforme necessário
-            "status": "PENDENTE"
+            "statusPagamento": 'Link de pagamento não disponivel'
         }
         logger.info(transacao_data)
 
@@ -124,8 +124,9 @@ def criar_cliente_com_relacionados(request):
             processo_obj = processo_serializer.save()
 
             # Agora, vamos criar a transação associada a esse cliente
-            servico_id = data.get('servico')  # você mencionou que passa o id do serviço
-            
+            servico_id = data.get('servico')  #passa o id do serviço
+            print(servico_id)
+
             transacao_obj = criar_transacao(cliente_data,processo_obj, servico_id,)
 
             if not transacao_obj:
@@ -224,7 +225,19 @@ class PedidosPorAfiliadoListView(generics.ListAPIView):
         """
         afiliado_id = self.kwargs['afiliado_id']
         return Processos.objects.filter(afiliado__id=afiliado_id)
-    
+
+class PedidosPorFuncionarioListView(generics.ListAPIView):
+    serializer_class = ClienteSerializerConsulta  # ou o serializer apropriado
+
+    def get_queryset(self):
+        """
+        Este método irá retornar uma lista de pedidos para o funcionário especificado.
+        O funcionário é determinado pelo `id` passado na URL.
+        """
+        funcionario_id = self.kwargs['funcionario_id']
+        return Processos.objects.filter(funcionario__id=funcionario_id)  
+
+
 class PedidosPorClienteListView(generics.ListAPIView):
     serializer_class = ClienteSerializerConsulta
 

@@ -14,15 +14,23 @@ class Transacao(models.Model):
     FormaDePagamento = models.CharField(max_length=100, blank=True, null=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
     data_atualizacao = models.DateTimeField(auto_now=True)
-    
-    status = models.CharField(
-    choices=[('PENDENTE', 'Pendente de Pagamento'), ('PAGO', 'Pago')],
-    max_length=20,
-    default='PENDENTE'
+    Observacoes = models.CharField(max_length=2000, blank=True, null=True)
+    comprovante = models.FileField(upload_to='comprovantesPagamento/', blank=True, null=True)
+    linkpagamento = models.CharField(max_length=200, blank=True, null=True)
+    statusPagamento = models.CharField(
+    choices=[('Pendente de Pagamento', 'Pendente de Pagamento'), 
+             ('Pago', 'Pago'),
+             ('Aguardando Confirmação', 'Aguardando Confirmação'), 
+             ('Link de pagamento não disponível', 'Link de pagamento não disponível'), 
+             ('Link de pagamento disponível', 'Link de pagamento disponível'),
+             ('Comprovante não validado', 'Comprovante não validado'),  
+            ],
+    max_length=100,
+    default='Pendente de Pagamento'
     )
     @property
     def processo_id(self):
         return self.pedido.id
 
     def __str__(self):
-        return f"Transação {self.id} - Cliente: {self.cliente.nome} - Afiliado: {self.afiliado.nome if self.afiliado else 'N/A'} - Preço: {self.preco} - Status: {self.status}"
+        return f"Transação {self.id} - Cliente: {self.cliente.nome} - Afiliado: {self.afiliado.nome if self.afiliado else 'N/A'} - Preço: {self.preco} - Status: {self.statusPagamento}"
