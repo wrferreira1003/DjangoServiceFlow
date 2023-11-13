@@ -153,12 +153,14 @@ class TransacaoSerializer(serializers.ModelSerializer):
 class ClienteSerializerConsulta(serializers.ModelSerializer):
     documentos = DocumentoSerializerConsulta(many=True, source='documento_set', read_only=True)
     afiliado = AfiliadoSerializerConsulta(read_only=True)
+    funcionario = AfiliadoSerializerConsulta(read_only=True)
     servicos = ServicoSerializer(read_only=True)
     transacao = TransacaoSerializer(read_only=True) 
 
     class Meta:
         model = Processos
         fields = '__all__'
+
 
 class ClienteSerializerAlteracao(serializers.ModelSerializer):    
     class Meta:

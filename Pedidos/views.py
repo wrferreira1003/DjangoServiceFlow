@@ -225,7 +225,19 @@ class PedidosPorAfiliadoListView(generics.ListAPIView):
         """
         afiliado_id = self.kwargs['afiliado_id']
         return Processos.objects.filter(afiliado__id=afiliado_id)
-    
+
+class PedidosPorFuncionarioListView(generics.ListAPIView):
+    serializer_class = ClienteSerializerConsulta  # ou o serializer apropriado
+
+    def get_queryset(self):
+        """
+        Este método irá retornar uma lista de pedidos para o funcionário especificado.
+        O funcionário é determinado pelo `id` passado na URL.
+        """
+        funcionario_id = self.kwargs['funcionario_id']
+        return Processos.objects.filter(funcionario__id=funcionario_id)  
+
+
 class PedidosPorClienteListView(generics.ListAPIView):
     serializer_class = ClienteSerializerConsulta
 

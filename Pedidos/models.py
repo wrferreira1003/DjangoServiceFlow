@@ -38,9 +38,24 @@ class Processos(models.Model):
   cep = models.CharField(max_length=9, blank=True, null=True)
   status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pendente')
   data_pedido = models.DateTimeField(auto_now_add=True)
-  afiliado = models.ForeignKey(AfiliadosModel, 
-                            on_delete=models.SET_NULL, 
-                            null=True, blank=True)
+  
+  afiliado = models.ForeignKey(
+    AfiliadosModel, 
+    on_delete=models.SET_NULL, 
+    null=True, 
+    blank=True,
+    related_name="processos_afiliado",
+    limit_choices_to={'user_type': 'AFILIADO'},
+  )
+  funcionario = models.ForeignKey(
+        AfiliadosModel, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='processos_funcionario',
+        limit_choices_to={'user_type': 'FUNC'},
+    )
+  
 
   servico = models.CharField(max_length=100, blank=True, null=True)
   subservico = models.CharField(max_length=100, blank=True, null=True)
