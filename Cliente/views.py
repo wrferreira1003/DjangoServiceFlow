@@ -79,7 +79,7 @@ def validate_account(request):
         # E-mail validado com sucesso, renderizando página com mensagem de sucesso
         return render(request, 'cliente/sucesso.html', {
                                 'message': 'Seu e-mail foi validado com sucesso! ',
-                                'link_url': 'https://service-frontend-scred.vercel.app/user/acess'
+                                'link_url': 'https://www.rcfacildocumentoseservicos.com.br/'
 })
     except ObjectDoesNotExist:
         # Token não encontrado, renderizando página com mensagem de erro
