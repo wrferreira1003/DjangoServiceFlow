@@ -61,7 +61,7 @@ class NovoClienteSerializerConsulta(serializers.ModelSerializer):
         FIELD_NAME_MAPPING = {
             'data_pedido': 'Data do Pedido',
             "idCliente": "Registro Cliente",
-            "nome": "Nome Solicitante",
+            "nome": "Nome",
             "email": "Email",
             "telefone": "Telefone",
             "RegistroGeral": "RG",
@@ -80,31 +80,31 @@ class NovoClienteSerializerConsulta(serializers.ModelSerializer):
             "cpfEnvolvido": "CPF do Envolvido",
             "estado_civil": "Estado Civil",
             "profissao": "Profissao",
-            "data_nascimento": "Data de Nascimento",
-            "nomeCartorioFirmaReconhecida": "Nome do Cartorio com Firma",
-            "estadoCartorioFirmaReconhecida": "Estado do Cartorio com Firma",
-            "livroCartorioFirmaReconhecida": "Livro do Cartorio com Firma",
-            "nomeCartorio": "Nome do Cartorio",
-            "estadoCartorio": "Estado do Cartório",
-            "cidadeCartorio": "Cidade do Cartório",
-            "livroCartorio":"Livro do Cartório",
-            "folhaCartorio": "Folha do Livro do Cartório",
+            "data_nascimento": "Data Nascimento",
+            "nomeCartorioFirmaReconhecida": "NomeCartorioFirmaReconhecida",
+            "estadoCartorioFirmaReconhecida": "EstadoCartorioFirmaReconhecida",
+            "livroCartorioFirmaReconhecida": "LivroCartorioFirmaReconhecida",
+            "nomeCartorio": "NomeCartorio",
+            "estadoCartorio": "EstadoCartorio",
+            "cidadeCartorio": "CidadeCartorio",
+            "livroCartorio":"LivroCartório",
+            "folhaCartorio": "FolhaCartório",
             "termo": "Termo",
-            "tipoDeEntrega": "Tipo de Entrega do Documento",
+            "tipoDeEntrega": "TipoDeEntrega",
             "FormaDePagamento": "Forma de Pagamento do Serviço",
-            "conjugue1":"Nome do primeiro cônjugue",
-            "conjugue2":"Nome do segundo cônjugue",
-            "data_casamento": "Data do casamento",
-            "data_obito": "Data do óbito",
+            "conjugue1":"Conjugue1",
+            "conjugue2":"Conjugue2",
+            "data_casamento": "Data casamento",
+            "data_obito": "Data óbito",
             "nome_falecido": "Nome do falecido",
             "data_inicial": "Data inicial",
             "data_final": "Data final",
-            "filiacao1": "Filiação 1",
-            "filiacao2": "Filiação 2",
+            "filiacao1": "Filiação1",
+            "filiacao2": "Filiação2",
             "Observacoes": "Observação",
-            "temFilhosMenores":"Tem Filhos Menores",
-            "temBens":"Tem Bens Partilhar",
-            "filhoIncapaz":"Tem Filhos Incapaz",
+            "temFilhosMenores":"TemFilhosMenores",
+            "temBens":"TemBens",
+            "filhoIncapaz":"FilhoIncapaz",
             # adicione outros campos aqui conforme necessário
         }
         
@@ -136,6 +136,17 @@ class NovoClienteSerializerConsulta(serializers.ModelSerializer):
                 formatted_date = date_obj.strftime("%d/%m/%Y")
 
             representation["Data de Nascimento"] = formatted_date
+
+        if "Data casamento" in representation and representation["Data casamento"]:
+            # Se já for um objeto de data, formate diretamente
+            if isinstance(representation["Data casamento"], (datetime, date)):
+                formatted_date = representation["Data casamento"].strftime("%d/%m/%Y")
+            # Se for uma string, converta para data primeiro e depois formate
+            else:
+                date_obj = datetime.strptime(representation["Data casamento"], "%Y-%m-%d")  # Usando o formato YYYY-MM-DD
+                formatted_date = date_obj.strftime("%d/%m/%Y")
+
+            representation["Data casamento"] = formatted_date
 
         return {key: value for key, value in representation.items() if value not in [None, "", [], {}, "null"]}
 
@@ -177,7 +188,7 @@ class AtualizaClienteSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         with transaction.atomic():
             documentos_data = validated_data.pop('documentos', [])
-            print(validated_data.items())
+            #print(validated_data.items())
             # Atualize os campos do cliente
             for attr, value in validated_data.items():
                 setattr(instance, attr, value)
