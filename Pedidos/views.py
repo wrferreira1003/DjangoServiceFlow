@@ -1,4 +1,5 @@
 from rest_framework import status, generics
+from datetime import datetime
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import NovoPedidoSerializer,DocumentoSerializer,ClienteSerializerConsulta,NovoClienteSerializerConsulta, ClienteSerializerAlteracao,AtualizaClienteSerializer
@@ -12,10 +13,17 @@ from Cliente.serializers import ClienteSerializer, ClienteExistenteSerializer
 from Servicos.models import Servico
 from financeiro.models import Transacao
 from Afiliados.models import AfiliadosModel
+from rest_framework.pagination import PageNumberPagination
 import logging
 import json
 
 logger = logging.getLogger('django')
+
+#Criando uma classe de paginaçao que posso usar nas requisiçoes
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 #Funcao que cria ou atualiza um novo cliente na hora que uma nova solicitacao e feita.
 def criar_ou_atualizar_cliente(data):
@@ -175,6 +183,13 @@ class ClienteDetailViewAlteracao(UpdateAPIView):
     serializer_class = ClienteSerializerAlteracao
     lookup_field = 'id'
 
+#Funcao para auxiliar na formatacao das datas antes de salvar
+def formatar_data(data_string, formato_origem, formato_destino='%Y-%m-%d'):
+    try:
+        return datetime.strptime(data_string, formato_origem).strftime(formato_destino)
+    except ValueError:
+        return None
+    
 @api_view(['PATCH'])
 def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar o registro
     try:
@@ -183,6 +198,27 @@ def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     data = request.data.copy()
+   
+    #Data de nascimento esta chegando no formato brasil, preciso ajustar antes de salvar
+    data_nascimento = data.get('data_nascimento')
+    if data_nascimento:
+        data_formatada = formatar_data(data_nascimento[0] if isinstance(data_nascimento, list) else data_nascimento, '%d/%m/%Y')
+        if data_formatada:
+            data['data_nascimento'] = data_formatada
+        else:
+            return Response({'error': 'Formato inválido para data de nascimento.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+    #Data de casamento esta chegando no formato brasil, preciso ajustar antes de salvar
+    data_casamento = data.get('data casamento')
+    print(data_casamento)
+    if data_casamento:
+        data_formatada = formatar_data(data_casamento[0] if isinstance(data_casamento, list) else data_casamento, '%d/%m/%Y')
+        if data_formatada:
+            data['data_casamento'] = data_formatada
+        else:
+            return Response({'error': 'Formato inválido para data de casamento.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    
     files = request.FILES
 
     documentos_data = []
@@ -217,14 +253,15 @@ def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar
 
 class PedidosPorAfiliadoListView(generics.ListAPIView):
     serializer_class = ClienteSerializerConsulta
-
+    pagination_class = StandardResultsSetPagination
+    
     def get_queryset(self):
         """
         Este método irá retornar uma lista de pedidos para o afiliado especificado.
         O afiliado é determinado pelo `id` passado na URL.
         """
         afiliado_id = self.kwargs['afiliado_id']
-        return Processos.objects.filter(afiliado__id=afiliado_id)
+        return Processos.objects.filter(afiliado__id=afiliado_id).order_by('-data_pedido')
 
 class PedidosPorFuncionarioListView(generics.ListAPIView):
     serializer_class = ClienteSerializerConsulta  # ou o serializer apropriado
@@ -236,7 +273,6 @@ class PedidosPorFuncionarioListView(generics.ListAPIView):
         """
         funcionario_id = self.kwargs['funcionario_id']
         return Processos.objects.filter(funcionario__id=funcionario_id)  
-
 
 class PedidosPorClienteListView(generics.ListAPIView):
     serializer_class = ClienteSerializerConsulta

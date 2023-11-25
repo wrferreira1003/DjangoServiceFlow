@@ -107,6 +107,7 @@ class AfiliadosPublicosView(ListAPIView):
         return queryset
     
 class FuncionariosPorAfiliadoView(APIView):
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, afiliado_id):
@@ -117,4 +118,3 @@ class FuncionariosPorAfiliadoView(APIView):
             return Response(serializer.data)
         except AfiliadosModel.DoesNotExist:
             return Response({"error": "Afiliado não encontrado."}, status=status.HTTP_404_NOT_FOUND)
-
