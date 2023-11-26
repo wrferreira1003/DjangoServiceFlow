@@ -75,6 +75,7 @@ class Processos(models.Model):
   data_obito = models.DateField(blank=True, null=True)
   nome_falecido = models.CharField(max_length=100, blank=True, null=True)
 
+  
   nomeEnvolvido = models.CharField(max_length=100, blank=True, null=True)
   sobrenomeEnvolvido = models.CharField(max_length=100, blank=True, null=True)
   RegistroGeralEnvolvido = models.CharField(max_length=20, blank=True, null=True)
