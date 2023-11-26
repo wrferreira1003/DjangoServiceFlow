@@ -210,7 +210,6 @@ def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar
             
     #Data de casamento esta chegando no formato brasil, preciso ajustar antes de salvar
     data_casamento = data.get('data casamento')
-    print(data_casamento)
     if data_casamento:
         data_formatada = formatar_data(data_casamento[0] if isinstance(data_casamento, list) else data_casamento, '%d/%m/%Y')
         if data_formatada:

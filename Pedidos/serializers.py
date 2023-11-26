@@ -11,6 +11,29 @@ from Servicos.models import Servico
 from financeiro.models import Transacao
 import os
 
+#Funcao que formata a data para enviar ao front
+def formatar_data(data_string, formato_entrada=None, formato_saida="%d/%m/%Y"):
+    if data_string is None:
+        return None
+    
+    formatos_possiveis = [
+        "%Y-%m-%dT%H:%M:%S.%f%z",  # Formato ISO com fuso horário
+        "%Y-%m-%d",                # Formato ano-mês-dia
+    ]
+
+    if formato_entrada:
+        formatos_possiveis.insert(0, formato_entrada)
+
+    for formato in formatos_possiveis:
+        try:
+            data_obj = datetime.strptime(data_string, formato)
+            return data_obj.strftime(formato_saida)
+        except ValueError:
+            continue
+
+    # Retorna a string original se nenhuma conversão funcionar
+    return data_string
+
 class DocumentoSerializer(serializers.ModelSerializer):
     arquivo = serializers.FileField(validators=[validate_file_type, validate_file_size])
     class Meta:
@@ -47,7 +70,7 @@ class AfiliadoSerializerConsulta(serializers.ModelSerializer):
                    'nome', 
                    'telefone'
                 ]
-
+    
 class NovoClienteSerializerConsulta(serializers.ModelSerializer):
     documentos = DocumentoSerializerConsulta(many=True, source='documento_set', read_only=True)
     afiliado = AfiliadoSerializerConsulta(read_only=True)
@@ -57,97 +80,20 @@ class NovoClienteSerializerConsulta(serializers.ModelSerializer):
         fields = '__all__'
     
     #Retorno apenas dados que tem valores    
-    def to_representation(self, instance):
-        FIELD_NAME_MAPPING = {
-            'data_pedido': 'Data do Pedido',
-            "idCliente": "Registro Cliente",
-            "nome": "Nome",
-            "email": "Email",
-            "telefone": "Telefone",
-            "RegistroGeral": "RG",
-            "cpf": "CPF",
-            "estado": "Estado",
-            "endereco": "Endereço",
-            "cidade": "Cidade",
-            "bairro": "Bairrro",
-            "cep": "CEP",
-            "status": "Status do Processo",
-            "servico": "Serviço Solicitado",
-            "subservico": "SubServiço Solicitado",
-            "nomeEnvolvido": "Nome do Envolvido",
-            "sobrenomeEnvolvido": "Sobrenome do Envolvido",
-            "RegistroGeralEnvolvido": "RG do Envolvido",
-            "cpfEnvolvido": "CPF do Envolvido",
-            "estado_civil": "Estado Civil",
-            "profissao": "Profissao",
-            "data_nascimento": "Data Nascimento",
-            "nomeCartorioFirmaReconhecida": "NomeCartorioFirmaReconhecida",
-            "estadoCartorioFirmaReconhecida": "EstadoCartorioFirmaReconhecida",
-            "livroCartorioFirmaReconhecida": "LivroCartorioFirmaReconhecida",
-            "nomeCartorio": "NomeCartorio",
-            "estadoCartorio": "EstadoCartorio",
-            "cidadeCartorio": "CidadeCartorio",
-            "livroCartorio":"LivroCartório",
-            "folhaCartorio": "FolhaCartório",
-            "termo": "Termo",
-            "tipoDeEntrega": "TipoDeEntrega",
-            "FormaDePagamento": "Forma de Pagamento do Serviço",
-            "conjugue1":"Conjugue1",
-            "conjugue2":"Conjugue2",
-            "data_casamento": "Data casamento",
-            "data_obito": "Data óbito",
-            "nome_falecido": "Nome do falecido",
-            "data_inicial": "Data inicial",
-            "data_final": "Data final",
-            "filiacao1": "Filiação1",
-            "filiacao2": "Filiação2",
-            "Observacoes": "Observação",
-            "temFilhosMenores":"TemFilhosMenores",
-            "temBens":"TemBens",
-            "filhoIncapaz":"FilhoIncapaz",
-            # adicione outros campos aqui conforme necessário
-        }
-        
+    def to_representation(self, instance):    
         representation = super().to_representation(instance)
-
-         # Renomear campos conforme o mapeamento
-        for field, new_name in FIELD_NAME_MAPPING.items():
-            if field in representation:
-                representation[new_name] = representation.pop(field)
         
-        if "Data do Pedido" in representation:
-            # Se já for um objeto de data, formate diretamente
-            if isinstance(representation["Data do Pedido"], (datetime, date)):
-                formatted_date = representation["Data do Pedido"].strftime("%d/%m/%Y")
-            # Se for uma string, converta para data primeiro e depois formate
-            else:
-                date_obj = datetime.strptime(representation["Data do Pedido"], "%Y-%m-%dT%H:%M:%S.%f%z")
-                formatted_date = date_obj.strftime("%d/%m/%Y")
+        #Chamando a funcao para ajustar o formato da Data
+        if "data_pedido" in representation:
+            representation["data_pedido"] = formatar_data(representation['data_pedido'])
+        #Chamando a funcao para ajustar o formato da Data
+        if "data_nascimento" in representation:
+            representation["data_nascimento"] = formatar_data(representation['data_nascimento'])
+    
+        if "data_casamento" in representation:
+            representation["data_casamento"] = formatar_data(representation['data_casamento'])
 
-            representation["Data do Pedido"] = formatted_date
-
-        if "Data de Nascimento" in representation and representation["Data de Nascimento"]:
-            # Se já for um objeto de data, formate diretamente
-            if isinstance(representation["Data de Nascimento"], (datetime, date)):
-                formatted_date = representation["Data de Nascimento"].strftime("%d/%m/%Y")
-            # Se for uma string, converta para data primeiro e depois formate
-            else:
-                date_obj = datetime.strptime(representation["Data de Nascimento"], "%Y-%m-%d")  # Usando o formato YYYY-MM-DD
-                formatted_date = date_obj.strftime("%d/%m/%Y")
-
-            representation["Data de Nascimento"] = formatted_date
-
-        if "Data casamento" in representation and representation["Data casamento"]:
-            # Se já for um objeto de data, formate diretamente
-            if isinstance(representation["Data casamento"], (datetime, date)):
-                formatted_date = representation["Data casamento"].strftime("%d/%m/%Y")
-            # Se for uma string, converta para data primeiro e depois formate
-            else:
-                date_obj = datetime.strptime(representation["Data casamento"], "%Y-%m-%d")  # Usando o formato YYYY-MM-DD
-                formatted_date = date_obj.strftime("%d/%m/%Y")
-
-            representation["Data casamento"] = formatted_date
-
+        
         return {key: value for key, value in representation.items() if value not in [None, "", [], {}, "null"]}
 
 class ServicoSerializer(serializers.ModelSerializer):
