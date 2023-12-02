@@ -37,6 +37,7 @@ class Processos(models.Model):
   bairro = models.CharField(max_length=100, blank=True, null=True)
   cep = models.CharField(max_length=9, blank=True, null=True)
   status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pendente')
+  status_adm_afiliado = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pendente')
   data_pedido = models.DateTimeField(auto_now_add=True)
   
   afiliado = models.ForeignKey(
