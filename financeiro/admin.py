@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Transacao
+from .models import Transacao, TransacaoAfiliadoAdministrador
 
 def processo_id(obj):
     return obj.pedido.id
@@ -18,4 +18,18 @@ class TransacaoNovoClienteModelAdmin(admin.ModelAdmin):
                     'FormaDePagamento',
                     'data_criacao',
                     'data_atualizacao'
+                   ]
+
+@admin.register(TransacaoAfiliadoAdministrador)
+class TransacaoAfiliadoADMModelAdmin(admin.ModelAdmin):
+    list_display= [ 'id',
+                    'afiliado',
+                    'servico',
+                    'pedido',
+                    'preco_suporte',
+                    'statusPagamento',
+                    'FormaDePagamento',
+                    'data_criacao',
+                    'data_atualizacao',
+                    'ObservacoesAdm',
                    ]

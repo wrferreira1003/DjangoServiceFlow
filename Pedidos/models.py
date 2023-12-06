@@ -37,6 +37,7 @@ class Processos(models.Model):
   bairro = models.CharField(max_length=100, blank=True, null=True)
   cep = models.CharField(max_length=9, blank=True, null=True)
   status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pendente')
+  status_adm_afiliado = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pendente')
   data_pedido = models.DateTimeField(auto_now_add=True)
   
   afiliado = models.ForeignKey(
@@ -102,7 +103,7 @@ class Processos(models.Model):
   filhoIncapaz = models.CharField(max_length=5, blank=True, null=True)
   
   def __str__(self):
-    return self.nome
+    return str(self.id)
 
 class Documento(models.Model):
     cliente = models.ForeignKey(Processos, on_delete=models.CASCADE,blank=True, null=True)

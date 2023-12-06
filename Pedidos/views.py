@@ -2,7 +2,7 @@ from rest_framework import status, generics
 from datetime import datetime
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .serializers import NovoPedidoSerializer,DocumentoSerializer,ClienteSerializerConsulta,NovoClienteSerializerConsulta, ClienteSerializerAlteracao,AtualizaClienteSerializer
+from .serializers import ClienteSerializerAlteracaoAdmAfiliado,NovoPedidoSerializer,DocumentoSerializer,ClienteSerializerConsulta,NovoClienteSerializerConsulta, ClienteSerializerAlteracao,AtualizaClienteSerializer
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -164,6 +164,7 @@ class NovoClienteDetailView(APIView):
 
 #Consultar todos os pedidos, pelo painel do administrado.        
 class TodosClientesViewSemFiltro(ListCreateAPIView):
+    pagination_class = StandardResultsSetPagination
     queryset = Processos.objects.all()
     serializer_class = ClienteSerializerConsulta
 
@@ -177,10 +178,16 @@ class ClienteDetailView(RetrieveUpdateDestroyAPIView):
     serializer_class = NovoClienteSerializerConsulta
     lookup_field = 'id'
 
-#Alteracao de informacoes no banco de dados
+#Alteracao de status no banco de dados do campo AfiliadoCliente
 class ClienteDetailViewAlteracao(UpdateAPIView):
     queryset = Processos.objects.all()
     serializer_class = ClienteSerializerAlteracao
+    lookup_field = 'id'
+
+#Alteracao de status no banco de dados do campo AdmAfiliado
+class ClienteDetailViewAlteracaoStatusAdmAfiliado(UpdateAPIView):
+    queryset = Processos.objects.all()
+    serializer_class = ClienteSerializerAlteracaoAdmAfiliado
     lookup_field = 'id'
 
 #Funcao para auxiliar na formatacao das datas antes de salvar

@@ -118,11 +118,15 @@ class ClienteSerializerConsulta(serializers.ModelSerializer):
         model = Processos
         fields = '__all__'
 
-
 class ClienteSerializerAlteracao(serializers.ModelSerializer):    
     class Meta:
         model = Processos
         fields = ['status']
+
+class ClienteSerializerAlteracaoAdmAfiliado(serializers.ModelSerializer):    
+    class Meta:
+        model = Processos
+        fields = ['status_adm_afiliado']
 
 class AtualizaClienteSerializer(serializers.ModelSerializer):
     documentos = DocumentoSerializer(many=True, required=False)
