@@ -32,5 +32,5 @@ class TransacaoPorPedidoListView(ListAPIView):
         Este view retorna uma lista de todas as transações para o pedido dado pelo 'id_pedido' na URL.
         """
         id_pedido = self.kwargs['id_pedido']
-        return TransacaoAfiliadoAdministrador.objects.filter(servico_id=id_pedido)
+        return TransacaoAfiliadoAdministrador.objects.filter(pedido_id=id_pedido)
 

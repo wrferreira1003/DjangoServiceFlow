@@ -103,7 +103,7 @@ class Processos(models.Model):
   filhoIncapaz = models.CharField(max_length=5, blank=True, null=True)
   
   def __str__(self):
-    return self.nome
+    return str(self.id)
 
 class Documento(models.Model):
     cliente = models.ForeignKey(Processos, on_delete=models.CASCADE,blank=True, null=True)

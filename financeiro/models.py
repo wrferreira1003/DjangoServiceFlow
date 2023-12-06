@@ -15,7 +15,7 @@ class Transacao(models.Model):
     FormaDePagamento = models.CharField(max_length=100, blank=True, null=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
     data_atualizacao = models.DateTimeField(auto_now=True)
-    Observacoes = models.CharField(max_length=2000, blank=True, null=True)
+    ObservacoesAfiliado = models.CharField(max_length=2000, blank=True, null=True)
     comprovante = models.FileField(upload_to='comprovantesPagamento/', blank=True, null=True)
     linkpagamento = models.CharField(max_length=200, blank=True, null=True)
     statusPagamento = models.CharField(
@@ -52,6 +52,7 @@ class TransacaoAfiliadoAdministrador(models.Model):
     data_atualizacao = models.DateTimeField(auto_now=True)
     Observacoes = models.CharField(max_length=2000, blank=True, null=True)
     ObservacoesAfiliado = models.CharField(max_length=2000, blank=True, null=True)
+    ObservacoesAdm = models.CharField(max_length=2000, blank=True, null=True)
     comprovante = models.FileField(upload_to='comprovantesPagamentoAdm/', blank=True, null=True)
     linkpagamento = models.CharField(max_length=200, blank=True, null=True)
     statusPagamento = models.CharField(

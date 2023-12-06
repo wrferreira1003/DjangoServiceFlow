@@ -30,5 +30,6 @@ class TransacaoAfiliadoADMModelAdmin(admin.ModelAdmin):
                     'statusPagamento',
                     'FormaDePagamento',
                     'data_criacao',
-                    'data_atualizacao'
+                    'data_atualizacao',
+                    'ObservacoesAdm',
                    ]
