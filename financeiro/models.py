@@ -46,7 +46,7 @@ class TransacaoAfiliadoAdministrador(models.Model):
     afiliado = models.ForeignKey('Afiliados.AfiliadosModel', on_delete=models.SET_NULL, null=True, blank=True, related_name="transacoesAfiliados")
     servico = models.ForeignKey('Servicos.Servico', on_delete=models.SET_NULL, null=True)
     pedido = models.OneToOneField('Pedidos.Processos', on_delete=models.CASCADE)
-    preco = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    preco_suporte = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     FormaDePagamento = models.CharField(max_length=100, blank=True, null=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
     data_atualizacao = models.DateTimeField(auto_now=True)

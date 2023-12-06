@@ -164,6 +164,7 @@ class NovoClienteDetailView(APIView):
 
 #Consultar todos os pedidos, pelo painel do administrado.        
 class TodosClientesViewSemFiltro(ListCreateAPIView):
+    pagination_class = StandardResultsSetPagination
     queryset = Processos.objects.all()
     serializer_class = ClienteSerializerConsulta
 

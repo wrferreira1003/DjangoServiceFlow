@@ -118,7 +118,6 @@ class ClienteSerializerConsulta(serializers.ModelSerializer):
         model = Processos
         fields = '__all__'
 
-
 class ClienteSerializerAlteracao(serializers.ModelSerializer):    
     class Meta:
         model = Processos

@@ -26,7 +26,7 @@ class TransacaoAfiliadoADMModelAdmin(admin.ModelAdmin):
                     'afiliado',
                     'servico',
                     'pedido',
-                    'preco',
+                    'preco_suporte',
                     'statusPagamento',
                     'FormaDePagamento',
                     'data_criacao',
