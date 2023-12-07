@@ -3,39 +3,8 @@ from .models import Processos, Documento
 
 @admin.register(Processos)
 class NovoClienteModelAdmin(admin.ModelAdmin):
-    list_display= [ 'id',
-                    'idCliente',
-                    'status',
-                    'status_adm_afiliado',
-                    'nome', 
-                    'email', 
-                    'telefone', 
-                    'RegistroGeral', 
-                    'cpf', 
-                    'estado_civil',
-                    'profissao',
-                    'data_nascimento',
-                    'estado',
-                    'endereco',
-                    'cidade',
-                    'bairro',
-                    'cep',
-                    'data_pedido',
-                    'afiliado',
-                    'servico',
-                    'subservico',
-                    'nomeEnvolvido',
-                    'sobrenomeEnvolvido',
-                    'RegistroGeralEnvolvido',
-                    'cpfEnvolvido',
-                    'nomeCartorio',
-                    'estadoCartorio',
-                    'livroCartorio',
-                    'folhaCartorio',
-                    'nomeCartorioFirmaReconhecida',
-                    'estadoCartorioFirmaReconhecida',
-                    'livroCartorioFirmaReconhecida'
-                   ]
+    def get_list_display(self, request):
+        return [field.name for field in self.model._meta.fields]
     
 
 class DocumentoAdmin(admin.ModelAdmin):

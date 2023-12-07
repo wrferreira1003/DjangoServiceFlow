@@ -31,11 +31,25 @@ class Processos(models.Model):
   #blank=True e null=True aceita ficar sem valor esse campo
   profissao = models.CharField(max_length=100, blank=True, null=True)
   data_nascimento = models.DateField(blank=True, null=True)
+  
+  #Endereço do cliente
   estado = models.CharField(max_length=50, blank=True, null=True)
-  endereco = models.TextField(blank=True, null=True)
+  logradouro = models.TextField(blank=True, null=True)
+  complemento = models.TextField(blank=True, null=True)
   cidade = models.CharField(max_length=100, blank=True, null=True)
   bairro = models.CharField(max_length=100, blank=True, null=True)
   cep = models.CharField(max_length=9, blank=True, null=True)
+  numero = models.CharField(max_length=9, blank=True, null=True)
+
+  #Endereço do secundario
+  estado_envolvido = models.CharField(max_length=50, blank=True, null=True)
+  logradouro_envolvido = models.TextField(blank=True, null=True)
+  complemento_envolvido = models.TextField(blank=True, null=True)
+  cidade_envolvido = models.CharField(max_length=100, blank=True, null=True)
+  bairro_envolvido = models.CharField(max_length=100, blank=True, null=True)
+  cep_envolvido = models.CharField(max_length=9, blank=True, null=True)
+  numero_envolvido = models.CharField(max_length=9, blank=True, null=True)
+  
   status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pendente')
   status_adm_afiliado = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pendente')
   data_pedido = models.DateTimeField(auto_now_add=True)
@@ -70,17 +84,20 @@ class Processos(models.Model):
   conjugue2 = models.CharField(max_length=100, blank=True, null=True)
   data_casamento = models.DateField(blank=True, null=True)
 
+
   data_inicial = models.DateField(blank=True, null=True)
   data_final = models.DateField(blank=True, null=True)
   
   data_obito = models.DateField(blank=True, null=True)
   nome_falecido = models.CharField(max_length=100, blank=True, null=True)
 
-  
+  #Dados do envolvido
   nomeEnvolvido = models.CharField(max_length=100, blank=True, null=True)
   sobrenomeEnvolvido = models.CharField(max_length=100, blank=True, null=True)
   RegistroGeralEnvolvido = models.CharField(max_length=20, blank=True, null=True)
   cpfEnvolvido = models.CharField(max_length=11, blank=True, null=True)
+  emailEnvolvido = models.EmailField(blank=True, null=True)
+  telefoneEnvolvido = models.CharField(max_length=15, blank=True, null=True) 
 
   nomeCartorio = models.CharField(max_length=100, blank=True, null=True)
   estadoCartorio = models.CharField(max_length=100, blank=True, null=True)
