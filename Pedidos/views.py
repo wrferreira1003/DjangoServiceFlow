@@ -7,7 +7,7 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Processos, Documento
+from .models import Processos, Documento, ClientJob, FinanciamentoVeiculo
 from Cliente.models import Cliente
 from Cliente.serializers import ClienteSerializer, ClienteExistenteSerializer
 from Servicos.models import Servico
@@ -88,7 +88,7 @@ def criar_client_job(dados_client_job, processo_obj):
     if client_job_serializer.is_valid():
         #print('client job serializer',client_job_serializer)
         
-        client_job_serializer.save(cliente=processo_obj)
+        client_job_serializer.save(processo=processo_obj)
         return client_job_serializer
     else:
         # Pode levantar uma exceção ou tratar o erro conforme a necessidade
@@ -99,7 +99,7 @@ def criar_client_job(dados_client_job, processo_obj):
 def criar_financiamento_veiculo(dados_financiamento, processo_obj):
     financiamento_serializer = FinanciamentoVeiculoSerializer(data=dados_financiamento)
     if financiamento_serializer.is_valid():
-        financiamento_serializer.save(cliente=processo_obj)
+        financiamento_serializer.save(processo=processo_obj)
         return financiamento_serializer
     else:
         # Pode levantar uma exceção ou tratar o erro conforme a necessidade
@@ -196,7 +196,7 @@ def criar_cliente_com_relacionados(request):
                     'tipo_veiculo': data.get('financiamento_veiculo[tipo_veiculo]', None),
                     'marca': data.get('financiamento_veiculo[marca]', None),
                     'modelo': data.get('financiamento_veiculo[modelo]', None),
-                    'ano' : data.get('financiamento_veiculo[ano]', None),
+                    'ano_modelo' : data.get('financiamento_veiculo[ano]', None),
                     'placa' : data.get('financiamento_veiculo[placa]', None),
                     'versao' : data.get('financiamento_veiculo[versao]', None),
                     'estado_licenciamento' : data.get('financiamento_veiculo[estado_licenciamento]', None),
@@ -204,6 +204,11 @@ def criar_cliente_com_relacionados(request):
                     'entrada' : data.get('financiamento_veiculo[entrada]', None),
                     'prazo' : data.get('financiamento_veiculo[prazo]', None),    
                     'banco' : data.get('financiamento_veiculo[banco]', None),
+                    'possui_carroceria' : data.get('financiamento_veiculo[possui_carroceria]', None),
+                    'ano_fabricacao' : data.get('financiamento_veiculo[ano_fabricacao]', None),
+                    'combustivel' : data.get('financiamento_veiculo[combustivel]', None),
+                    'cambio' : data.get('financiamento_veiculo[cambio]', None),
+                    
                 }
             
             try:
@@ -287,8 +292,13 @@ def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar
     except Processos.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
+    #obter o ClientJob e o FinanciamentoVeiculo associados, ou defina-os como None se eles não existirem
+    client_job = ClientJob.objects.filter(processo=cliente).first()
+    financiamento_veiculo = FinanciamentoVeiculo.objects.filter(processo=cliente).first()
+
+
     data = request.data.copy()
-   
+    print(data)
     #Data de nascimento esta chegando no formato brasil, preciso ajustar antes de salvar
     data_nascimento = data.get('data_nascimento')
     if data_nascimento:
@@ -329,16 +339,44 @@ def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar
 
     data['documentos'] = documentos_data
 
-    cliente_serializer = AtualizaClienteSerializer(cliente, data=data, partial=True)  # Usando um serializer para atualização
-
+    
+    cliente_serializer = AtualizaClienteSerializer(cliente, data=data, partial=True)  
     if cliente_serializer.is_valid():
-        
         cliente_serializer.validated_data['documentos'] = documentos_data
-   
         cliente_serializer.save()
-        return Response(cliente_serializer.data, status=status.HTTP_200_OK)
     else:
         return Response(cliente_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+    # Atualize ou crie o ClientJob
+    client_job_fields = client_job.get_field_names() if client_job else []
+    #print(client_job_fields)
+    #incluir um campo no client_job_data apenas se ele estiver presente na solicitação. Aqui está como você pode fazer isso:
+    client_job_data = {
+        field: data.get(field) for field in client_job_fields if field in data
+    }
+    if client_job_data:
+        client_job_serializer = ClientJobSerializer(client_job, data=client_job_data, partial=True)
+        if client_job_serializer.is_valid():
+            client_job_serializer.save()
+        else:
+            return Response(client_job_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    financiamento_veiculo_fields = financiamento_veiculo.get_field_names() if financiamento_veiculo else []
+    # Atualize ou crie o FinanciamentoVeiculo
+    financiamento_veiculo_data = {
+        field: data.get(field) for field in financiamento_veiculo_fields if field in data
+    }
+    #print(financiamento_veiculo_data)
+    if financiamento_veiculo_data:
+        financiamento_veiculo_serializer = FinanciamentoVeiculoSerializer(financiamento_veiculo, data=financiamento_veiculo_data, partial=True)
+        if financiamento_veiculo_serializer.is_valid():
+            financiamento_veiculo_serializer.save()
+        else:
+            return Response(financiamento_veiculo_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(cliente_serializer.data, status=status.HTTP_200_OK)
+
 
 #Consultar os pedidos pelo id do afiliado
 class PedidosPorAfiliadoListView(generics.ListAPIView):

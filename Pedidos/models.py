@@ -147,13 +147,18 @@ class ClientJob(models.Model):
     bairro_trabalho = models.CharField(max_length=100, blank=True, null=True)
     cidade_trabalho = models.CharField(max_length=100, blank=True, null=True)
     estado_trabalho = models.CharField(max_length=50, blank=True, null=True)
+    #Criar novos campos precisa atualizar a views criar_cliente_com_relacionados
+    
+    @classmethod
+    def get_field_names(cls):
+        return [f.name for f in cls._meta.get_fields()]
 
 class FinanciamentoVeiculo(models.Model): 
     processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
     tipo_veiculo = models.CharField(max_length=100, blank=True, null=True)
     marca = models.CharField(max_length=100, blank=True, null=True)
     modelo = models.CharField(max_length=100, blank=True, null=True)
-    ano = models.CharField(max_length=100, blank=True, null=True)
+    ano_modelo = models.CharField(max_length=100, blank=True, null=True)
     placa = models.CharField(max_length=100, blank=True, null=True)
     versao = models.CharField(max_length=100, blank=True, null=True)
     estado_licenciamento = models.CharField(max_length=100, blank=True, null=True)
@@ -161,3 +166,27 @@ class FinanciamentoVeiculo(models.Model):
     entrada = models.CharField(max_length=100, blank=True, null=True)
     prazo = models.CharField(max_length=100, blank=True, null=True)    
     banco = models.CharField(max_length=100, blank=True, null=True)
+
+    possui_carroceria = models.CharField(max_length=100, blank=True, null=True)
+    ano_fabricacao = models.CharField(max_length=100, blank=True, null=True)
+    combustivel = models.CharField(max_length=100, blank=True, null=True)
+    cambio = models.CharField(max_length=100, blank=True, null=True)
+    #Criar novos campos precisa atualizar a views criar_cliente_com_relacionados
+    
+    @classmethod
+    def get_field_names(cls):
+        return [f.name for f in cls._meta.get_fields()]
+
+class ClientEmpresarial(models.Model): 
+    processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
+    nome_fantasia = models.CharField(max_length=100, blank=True, null=True)
+    razao_social = models.CharField(max_length=100, blank=True, null=True)
+    cnpj = models.CharField(max_length=100, blank=True, null=True)
+    data_abertura = models.DateField(blank=True, null=True)
+    faturamento_mensal = models.CharField(max_length=100, blank=True, null=True)
+    contador_nome = models.CharField(max_length=9, blank=True, null=True)
+    telefone_contador = models.TextField(blank=True, null=True)
+    
+    @classmethod
+    def get_field_names(cls):
+        return [f.name for f in cls._meta.get_fields()]
