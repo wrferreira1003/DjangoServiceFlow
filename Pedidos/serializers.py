@@ -1,6 +1,6 @@
 # serializers.py dentro do seu app
 from rest_framework import serializers
-from .models import Processos, Documento
+from .models import Processos, Documento, ClientJob, FinanciamentoVeiculo
 from Afiliados.models import AfiliadosModel
 from Cliente.models import Cliente
 from financeiro.models import Transacao
@@ -33,6 +33,28 @@ def formatar_data(data_string, formato_entrada=None, formato_saida="%d/%m/%Y"):
 
     # Retorna a string original se nenhuma conversão funcionar
     return data_string
+
+#Serializer do modelo ClientJob
+class ClientJobSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClientJob
+        fields = '__all__'
+
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None}
+
+#Serializer do modelo FinanciamentoVeiculo
+class FinanciamentoVeiculoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FinanciamentoVeiculo
+        fields = '__all__'
+    
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None}
 
 class DocumentoSerializer(serializers.ModelSerializer):
     arquivo = serializers.FileField(validators=[validate_file_type, validate_file_size])
@@ -74,6 +96,8 @@ class AfiliadoSerializerConsulta(serializers.ModelSerializer):
 class NovoClienteSerializerConsulta(serializers.ModelSerializer):
     documentos = DocumentoSerializerConsulta(many=True, source='documento_set', read_only=True)
     afiliado = AfiliadoSerializerConsulta(read_only=True)
+    client_job = ClientJobSerializer(source='clientjob', read_only=True)  # Alterado aqui
+    financiamento_veiculo = FinanciamentoVeiculoSerializer(source='financiamentoveiculo', read_only=True)  # Alterado aqui
     
     class Meta:
         model = Processos
@@ -112,11 +136,18 @@ class ClienteSerializerConsulta(serializers.ModelSerializer):
     afiliado = AfiliadoSerializerConsulta(read_only=True)
     funcionario = AfiliadoSerializerConsulta(read_only=True)
     servicos = ServicoSerializer(read_only=True)
-    transacao = TransacaoSerializer(read_only=True) 
+    transacao = TransacaoSerializer(read_only=True)
+    client_job = ClientJobSerializer(source='clientjob', read_only=True)  # Alterado aqui
+    financiamento_veiculo = FinanciamentoVeiculoSerializer(source='financiamentoveiculo', read_only=True)  # Alterado aqui
 
     class Meta:
         model = Processos
         fields = '__all__'
+
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None}
 
 class ClienteSerializerAlteracao(serializers.ModelSerializer):    
     class Meta:

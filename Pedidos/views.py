@@ -2,7 +2,7 @@ from rest_framework import status, generics
 from datetime import datetime
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .serializers import ClienteSerializerAlteracaoAdmAfiliado,NovoPedidoSerializer,DocumentoSerializer,ClienteSerializerConsulta,NovoClienteSerializerConsulta, ClienteSerializerAlteracao,AtualizaClienteSerializer
+from .serializers import ClientJobSerializer, FinanciamentoVeiculoSerializer, ClienteSerializerAlteracaoAdmAfiliado,NovoPedidoSerializer,DocumentoSerializer,ClienteSerializerConsulta,NovoClienteSerializerConsulta, ClienteSerializerAlteracao,AtualizaClienteSerializer
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -15,7 +15,7 @@ from financeiro.models import Transacao
 from Afiliados.models import AfiliadosModel
 from rest_framework.pagination import PageNumberPagination
 import logging
-import json
+from rest_framework.permissions import IsAuthenticated
 
 logger = logging.getLogger('django')
 
@@ -44,6 +44,7 @@ def criar_ou_atualizar_cliente(data):
 
     return None, False
 
+#Funcao que cria uma transacao no banco de dados
 def criar_transacao(cliente_data,processo_obj, servico_id):
     logger.info("Iniciando a criação de uma transacao...")
     try:
@@ -78,6 +79,44 @@ def criar_transacao(cliente_data,processo_obj, servico_id):
         logger.error(f"Erro ao criar transação: {e}")
         return None
 
+#Funcao que cria os Dados de trabalho do cliente
+def criar_client_job(dados_client_job, processo_obj):
+    
+    client_job_serializer = ClientJobSerializer(data=dados_client_job)
+    #print('dados client job',dados_client_job)
+
+    if client_job_serializer.is_valid():
+        #print('client job serializer',client_job_serializer)
+        
+        client_job_serializer.save(cliente=processo_obj)
+        return client_job_serializer
+    else:
+        # Pode levantar uma exceção ou tratar o erro conforme a necessidade
+        logger.error(f"Erro na validação dos documentos: {client_job_serializer.errors}")
+        raise ValueError(f"Erro na validação do ClientJob: {client_job_serializer.errors}")
+
+#Funcao que cria os Dados de financiamento do cliente
+def criar_financiamento_veiculo(dados_financiamento, processo_obj):
+    financiamento_serializer = FinanciamentoVeiculoSerializer(data=dados_financiamento)
+    if financiamento_serializer.is_valid():
+        financiamento_serializer.save(cliente=processo_obj)
+        return financiamento_serializer
+    else:
+        # Pode levantar uma exceção ou tratar o erro conforme a necessidade
+        print('Funcao financiamento veiculo',financiamento_serializer.errors)
+        raise ValueError(f"Erro na validação do financiamentoVeiculo: {financiamento_serializer.errors}")
+
+def extrair_subservico(subservico):
+    # Já que subservico é uma string, não precisamos pegar o primeiro elemento de uma lista
+    subservico_str = subservico.strip()
+
+    # Dividimos a string pelo caractere '-' e removemos espaços em branco extras.
+    partes = subservico_str.split('-')
+    nome_subservico = partes[0].strip() if len(partes) > 0 else ''
+
+    return nome_subservico
+
+#----------------------------------------------------------------------------------------------#
 @api_view(['POST'])
 def criar_cliente_com_relacionados(request):
     logger.info("Iniciando a criação do cliente e relacionados...")
@@ -131,6 +170,50 @@ def criar_cliente_com_relacionados(request):
 
             processo_obj = processo_serializer.save()
 
+            #Aqui vamos verificar se é financiamento de veiculo e se for criamos a instancia de financiamento e job
+            subservico = request.data.get('subservico', '')
+            nome_subservico = extrair_subservico(subservico)
+            # Funcao que cria as instancias de job e financiamento.
+            if nome_subservico == "Financiamento Veicular": 
+                client_job = {
+                    'profissao': data.get('client_job[profissao]', None),
+                    'cargo': data.get('client_job[cargo]', None),
+                    'renda_mensal': data.get('client_job[renda_mensal]', None),
+                    'data_admissao': data.get('client_job[data_admissao]', None),
+                    'telefone_trabalho': data.get('client_job[telefone_trabalho]', None),
+                    'empresa': data.get('client_job[empresa]', None),
+                    'cep_trabalho': data.get('client_job[cep_trabalho]', None),
+                    'logradouro_trabalho': data.get('client_job[logradouro_trabalho]', None),
+                    'complemento_trabalho': data.get('client_job[complemento_trabalho]', None),
+                    'numero_trabalho': data.get('client_job[numero_trabalho]',None),
+                    'bairro_trabalho': data.get('client_job[bairro_trabalho]', None),
+                    'cidade_trabalho': data.get('client_job[cidade_trabalho]', None),
+                    'estado_trabalho': data.get('client_job[estado_trabalho]', None),
+                }
+             
+                # Compilando dados para financiamento_veiculo
+                financiamento_veiculo = {
+                    'tipo_veiculo': data.get('financiamento_veiculo[tipo_veiculo]', None),
+                    'marca': data.get('financiamento_veiculo[marca]', None),
+                    'modelo': data.get('financiamento_veiculo[modelo]', None),
+                    'ano' : data.get('financiamento_veiculo[ano]', None),
+                    'placa' : data.get('financiamento_veiculo[placa]', None),
+                    'versao' : data.get('financiamento_veiculo[versao]', None),
+                    'estado_licenciamento' : data.get('financiamento_veiculo[estado_licenciamento]', None),
+                    'valor' : data.get('financiamento_veiculo[valor]', None),
+                    'entrada' : data.get('financiamento_veiculo[entrada]', None),
+                    'prazo' : data.get('financiamento_veiculo[prazo]', None),    
+                    'banco' : data.get('financiamento_veiculo[banco]', None),
+                }
+            
+            try:
+                criar_client_job(client_job, processo_obj)
+                criar_financiamento_veiculo(financiamento_veiculo, processo_obj)
+            except ValueError as e:
+                print(e)
+                # Trate o erro conforme necessário
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST) 
+            
             # Agora, vamos criar a transação associada a esse cliente
             servico_id = data.get('servico')  #passa o id do serviço
             print(servico_id)
@@ -257,9 +340,11 @@ def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar
     else:
         return Response(cliente_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+#Consultar os pedidos pelo id do afiliado
 class PedidosPorAfiliadoListView(generics.ListAPIView):
     serializer_class = ClienteSerializerConsulta
     pagination_class = StandardResultsSetPagination
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         """

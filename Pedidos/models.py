@@ -130,3 +130,34 @@ class Documento(models.Model):
 
     def __str__(self):
         return f"Documento {self.id}: {self.descricao}"
+    
+
+class ClientJob(models.Model): 
+    processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
+    profissao = models.CharField(max_length=100, blank=True, null=True)
+    cargo = models.CharField(max_length=100, blank=True, null=True)
+    renda_mensal = models.CharField(max_length=100, blank=True, null=True)
+    data_admissao = models.DateField(blank=True, null=True)
+    telefone_trabalho = models.CharField(max_length=15, blank=True, null=True)
+    empresa = models.CharField(max_length=100, blank=True, null=True)
+    cep_trabalho = models.CharField(max_length=9, blank=True, null=True)
+    logradouro_trabalho = models.TextField(blank=True, null=True)
+    complemento_trabalho = models.TextField(blank=True, null=True)
+    numero_trabalho = models.CharField(max_length=9, blank=True, null=True)
+    bairro_trabalho = models.CharField(max_length=100, blank=True, null=True)
+    cidade_trabalho = models.CharField(max_length=100, blank=True, null=True)
+    estado_trabalho = models.CharField(max_length=50, blank=True, null=True)
+
+class FinanciamentoVeiculo(models.Model): 
+    processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
+    tipo_veiculo = models.CharField(max_length=100, blank=True, null=True)
+    marca = models.CharField(max_length=100, blank=True, null=True)
+    modelo = models.CharField(max_length=100, blank=True, null=True)
+    ano = models.CharField(max_length=100, blank=True, null=True)
+    placa = models.CharField(max_length=100, blank=True, null=True)
+    versao = models.CharField(max_length=100, blank=True, null=True)
+    estado_licenciamento = models.CharField(max_length=100, blank=True, null=True)
+    valor = models.CharField(max_length=100, blank=True, null=True)
+    entrada = models.CharField(max_length=100, blank=True, null=True)
+    prazo = models.CharField(max_length=100, blank=True, null=True)    
+    banco = models.CharField(max_length=100, blank=True, null=True)
