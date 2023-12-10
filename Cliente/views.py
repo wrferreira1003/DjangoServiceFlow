@@ -28,17 +28,17 @@ class TodosClientesViewSet(viewsets.ModelViewSet):  # ReadOnly porque só querem
 @api_view(['GET'])
 def verifica_cpf(request, cpf):
     if Cliente.objects.filter(cpf=cpf).exists():
-        return Response({"message": "CPF já existe"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"exists": True}, status=status.HTTP_200_OK)
     else:
-        return Response({"message": "CPF não encontrado"}, status=status.HTTP_200_OK)
+        return Response({"exists": False}, status=status.HTTP_200_OK)
 
 #Verificar se o Email ja existe
 @api_view(['GET'])
 def verifica_email(request, email):
     if Cliente.objects.filter(email=email).exists():
-        return Response({"message": "Email já existe"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"exists": True}, status=status.HTTP_200_OK)
     else:
-        return Response({"message": "Email não encontrado"}, status=status.HTTP_200_OK)
+        return Response({"exists": False}, status=status.HTTP_200_OK)
 
 #Registrar um novo cliente
 class RegistrarClientesViewSet(APIView):
@@ -64,6 +64,7 @@ class AtualizaClienteViewSet(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 #verifica o token e, se válido, ativa a conta do usuário.
+
 @api_view(['GET'])
 def validate_account(request):
     token = request.GET.get('token')
@@ -117,4 +118,4 @@ def ListagemClienteCpf(request, cpf):
         serializer = UserSerializer(cliente)
         return Response(serializer.data, status=status.HTTP_200_OK)
     except Cliente.DoesNotExist:
-        return Response({"message": "CPF não encontrado"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Cliente não encontrado'}, status=404)

@@ -19,27 +19,20 @@ class Processos(models.Model):
   from Afiliados.models import AfiliadosModel
   from Servicos.models import Servico
 
+  #Dados do cliente
   idCliente = models.CharField(max_length=10, blank=True, null=True)
-  nome = models.CharField(max_length=100, blank=True, null=True)
-  email = models.EmailField(blank=True, null=True)
-  telefone = models.CharField(max_length=15, blank=True, null=True) 
-  RegistroGeral = models.CharField(max_length=20, blank=True, null=True)
-  cpf = models.CharField(max_length=11, blank=True, null=True)
-  estado_civil = models.CharField(max_length=15, 
-                                  choices=ESTADO_CIVIL_CHOICES,
-                                  blank=True,  null=True)
   #blank=True e null=True aceita ficar sem valor esse campo
-  profissao = models.CharField(max_length=100, blank=True, null=True)
-  data_nascimento = models.DateField(blank=True, null=True)
-  
+
+  filiacao1 = models.CharField(max_length=100, blank=True, null=True)
+  filiacao2 = models.CharField(max_length=100, blank=True, null=True) 
   #Endereço do cliente
-  estado = models.CharField(max_length=50, blank=True, null=True)
-  logradouro = models.TextField(blank=True, null=True)
-  complemento = models.TextField(blank=True, null=True)
-  cidade = models.CharField(max_length=100, blank=True, null=True)
-  bairro = models.CharField(max_length=100, blank=True, null=True)
-  cep = models.CharField(max_length=9, blank=True, null=True)
-  numero = models.CharField(max_length=9, blank=True, null=True)
+  #estado = models.CharField(max_length=50, blank=True, null=True)
+  #logradouro = models.TextField(blank=True, null=True)
+  #complemento = models.TextField(blank=True, null=True)
+  #cidade = models.CharField(max_length=100, blank=True, null=True)
+  #bairro = models.CharField(max_length=100, blank=True, null=True)
+  #cep = models.CharField(max_length=9, blank=True, null=True)
+  #numero = models.CharField(max_length=9, blank=True, null=True)
 
   #Endereço do secundario
   estado_envolvido = models.CharField(max_length=50, blank=True, null=True)
@@ -76,9 +69,6 @@ class Processos(models.Model):
   subservico = models.CharField(max_length=100, blank=True, null=True)
   
   servicoCadastro = models.ForeignKey(Servico, on_delete=models.SET_NULL, null=True, blank=True)
-
-  filiacao1 = models.CharField(max_length=100, blank=True, null=True)
-  filiacao2 = models.CharField(max_length=100, blank=True, null=True)
 
   conjugue1 = models.CharField(max_length=100, blank=True, null=True)
   conjugue2 = models.CharField(max_length=100, blank=True, null=True)
@@ -130,7 +120,6 @@ class Documento(models.Model):
 
     def __str__(self):
         return f"Documento {self.id}: {self.descricao}"
-    
 
 class ClientJob(models.Model): 
     processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
@@ -147,6 +136,9 @@ class ClientJob(models.Model):
     bairro_trabalho = models.CharField(max_length=100, blank=True, null=True)
     cidade_trabalho = models.CharField(max_length=100, blank=True, null=True)
     estado_trabalho = models.CharField(max_length=50, blank=True, null=True)
+
+    nome_referencia = models.CharField(max_length=100, blank=True, null=True)
+    telefone_referencia = models.CharField(max_length=100, blank=True, null=True)
     #Criar novos campos precisa atualizar a views criar_cliente_com_relacionados
     
     @classmethod
@@ -171,6 +163,8 @@ class FinanciamentoVeiculo(models.Model):
     ano_fabricacao = models.CharField(max_length=100, blank=True, null=True)
     combustivel = models.CharField(max_length=100, blank=True, null=True)
     cambio = models.CharField(max_length=100, blank=True, null=True)
+
+    
     #Criar novos campos precisa atualizar a views criar_cliente_com_relacionados
     
     @classmethod

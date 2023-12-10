@@ -16,6 +16,8 @@ from Afiliados.models import AfiliadosModel
 from rest_framework.pagination import PageNumberPagination
 import logging
 from rest_framework.permissions import IsAuthenticated
+from django.db import transaction
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger('django')
 
@@ -93,7 +95,7 @@ def criar_client_job(dados_client_job, processo_obj):
     else:
         # Pode levantar uma exceção ou tratar o erro conforme a necessidade
         logger.error(f"Erro na validação dos documentos: {client_job_serializer.errors}")
-        raise ValueError(f"Erro na validação do ClientJob: {client_job_serializer.errors}")
+        raise ValidationError(f"Erro na validação do ClientJob: {client_job_serializer.errors}")
 
 #Funcao que cria os Dados de financiamento do cliente
 def criar_financiamento_veiculo(dados_financiamento, processo_obj):
@@ -103,8 +105,8 @@ def criar_financiamento_veiculo(dados_financiamento, processo_obj):
         return financiamento_serializer
     else:
         # Pode levantar uma exceção ou tratar o erro conforme a necessidade
-        print('Funcao financiamento veiculo',financiamento_serializer.errors)
-        raise ValueError(f"Erro na validação do financiamentoVeiculo: {financiamento_serializer.errors}")
+        logger.error(f"Erro na validação do financiamentoVeiculo: {financiamento_serializer.errors}")
+        raise ValidationError(f"Erro na validação do financiamentoVeiculo: {financiamento_serializer.errors}")
 
 def extrair_subservico(subservico):
     # Já que subservico é uma string, não precisamos pegar o primeiro elemento de uma lista
@@ -117,128 +119,120 @@ def extrair_subservico(subservico):
     return nome_subservico
 
 #----------------------------------------------------------------------------------------------#
+@transaction.atomic # Isso garante que todas as operações de banco de dados sejam executadas ou nenhuma delas seja executada
 @api_view(['POST'])
 def criar_cliente_com_relacionados(request):
     logger.info("Iniciando a criação do cliente e relacionados...")
+    data = request.data.copy()  # Mudança aqui
+    files = request.FILES
+    documentos_data = []
+
+    # Captura todos os documentos enviados
+    for key, arquivo in files.items():
+        if key.startswith('documentos'):
+            index = key.split('[')[1].split(']')[0]  # pegar o índice dos documentos
+            descricao = data.get(f'documentos[{index}].descricao')
+            documentos_data.append({
+                'descricao': descricao,
+                'arquivo': arquivo
+        })
+        
+    # Remover campos de documentos do data original para evitar problemas com o serializador
+    for key in list(data.keys()):
+        if key.startswith('documentos'):
+            del data[key]
+
+    # Incluindo os documentos processados na data
+    data['documentos'] = documentos_data
+
+    print(data)    
     try:
-        data = request.data.copy()  # Mudança aqui
-        files = request.FILES
-        
-        documentos_data = []
-
-        # Captura todos os documentos enviados
-        for key, arquivo in files.items():
-            if key.startswith('documentos'):
-                index = key.split('[')[1].split(']')[0]  # pegar o índice dos documentos
-                descricao = data.get(f'documentos[{index}].descricao')
-                documentos_data.append({
-                    'descricao': descricao,
-                    'arquivo': arquivo
-                })
-        
-        # Remover campos de documentos do data original para evitar problemas com o serializador
-        for key in list(data.keys()):
-            if key.startswith('documentos'):
-                del data[key]
-
-        # Incluindo os documentos processados na data
-        data['documentos'] = documentos_data
-        
-
         # Chamada para a função que cria ou atualiza o cliente
         cliente_data, is_new = criar_ou_atualizar_cliente(data)
-        if not cliente_data:
-            logger.error("Erro ao criar ou atualizar cliente.")
-            return Response({"error": "Erro ao criar ou atualizar cliente."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Vamos testar a validação dos documentos aqui
-        doc_serializer = DocumentoSerializer(data=documentos_data, many=True)
-        if doc_serializer.is_valid():
-            logger.info("Documentos validados corretamente!")
-        else:
-            logger.error(f"Erro na validação dos documentos: {doc_serializer.errors}")
-
-    
-        processo_serializer = NovoPedidoSerializer(data=data)
-
-
-        if processo_serializer.is_valid():
-            processo_serializer.validated_data['documentos'] = documentos_data
-
-            # Aqui você atualiza o validated_data com o ID do cliente antes de salvar o processo.
-            processo_serializer.validated_data['idCliente'] = cliente_data['id']  # ou cliente_data.id se for um objeto
-
-            processo_obj = processo_serializer.save()
-
-            #Aqui vamos verificar se é financiamento de veiculo e se for criamos a instancia de financiamento e job
-            subservico = request.data.get('subservico', '')
-            nome_subservico = extrair_subservico(subservico)
-            # Funcao que cria as instancias de job e financiamento.
-            if nome_subservico == "Financiamento Veicular": 
-                client_job = {
-                    'profissao': data.get('client_job[profissao]', None),
-                    'cargo': data.get('client_job[cargo]', None),
-                    'renda_mensal': data.get('client_job[renda_mensal]', None),
-                    'data_admissao': data.get('client_job[data_admissao]', None),
-                    'telefone_trabalho': data.get('client_job[telefone_trabalho]', None),
-                    'empresa': data.get('client_job[empresa]', None),
-                    'cep_trabalho': data.get('client_job[cep_trabalho]', None),
-                    'logradouro_trabalho': data.get('client_job[logradouro_trabalho]', None),
-                    'complemento_trabalho': data.get('client_job[complemento_trabalho]', None),
-                    'numero_trabalho': data.get('client_job[numero_trabalho]',None),
-                    'bairro_trabalho': data.get('client_job[bairro_trabalho]', None),
-                    'cidade_trabalho': data.get('client_job[cidade_trabalho]', None),
-                    'estado_trabalho': data.get('client_job[estado_trabalho]', None),
-                }
-             
-                # Compilando dados para financiamento_veiculo
-                financiamento_veiculo = {
-                    'tipo_veiculo': data.get('financiamento_veiculo[tipo_veiculo]', None),
-                    'marca': data.get('financiamento_veiculo[marca]', None),
-                    'modelo': data.get('financiamento_veiculo[modelo]', None),
-                    'ano_modelo' : data.get('financiamento_veiculo[ano]', None),
-                    'placa' : data.get('financiamento_veiculo[placa]', None),
-                    'versao' : data.get('financiamento_veiculo[versao]', None),
-                    'estado_licenciamento' : data.get('financiamento_veiculo[estado_licenciamento]', None),
-                    'valor' : data.get('financiamento_veiculo[valor]', None),
-                    'entrada' : data.get('financiamento_veiculo[entrada]', None),
-                    'prazo' : data.get('financiamento_veiculo[prazo]', None),    
-                    'banco' : data.get('financiamento_veiculo[banco]', None),
-                    'possui_carroceria' : data.get('financiamento_veiculo[possui_carroceria]', None),
-                    'ano_fabricacao' : data.get('financiamento_veiculo[ano_fabricacao]', None),
-                    'combustivel' : data.get('financiamento_veiculo[combustivel]', None),
-                    'cambio' : data.get('financiamento_veiculo[cambio]', None),
-                    
-                }
-            
-            try:
-                criar_client_job(client_job, processo_obj)
-                criar_financiamento_veiculo(financiamento_veiculo, processo_obj)
-            except ValueError as e:
-                print(e)
-                # Trate o erro conforme necessário
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST) 
-            
-            # Agora, vamos criar a transação associada a esse cliente
-            servico_id = data.get('servico')  #passa o id do serviço
-            print(servico_id)
-
-            transacao_obj = criar_transacao(cliente_data,processo_obj, servico_id,)
-
-            if not transacao_obj:
-                logger.error("Erro ao criar transação. Serviço não encontrado.")
-                return Response({"error": "Serviço não encontrado."}, status=status.HTTP_400_BAD_REQUEST)
-            
-            return Response(processo_serializer.data, status=status.HTTP_201_CREATED)
-        
-        else:
-            logger.error(f"Erro no serializer: {processo_serializer.errors}")
-            return Response(processo_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
     except Exception as e:
-        logger.exception(f"Erro inesperado na função criar_cliente_com_relacionados: {e}")
-        return Response({"error": "Erro interno do servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.error(f"Erro ao criar ou atualizar cliente: {str(e)}")
+        return Response({"error": "Erro ao criar ou atualizar cliente."}, status=status.HTTP_400_BAD_REQUEST)
 
+        
+    # Vamos testar a validação dos documentos aqui
+    doc_serializer = DocumentoSerializer(data=documentos_data, many=True)
+    if doc_serializer.is_valid():
+        logger.info("Documentos validados corretamente!")
+    else:
+        logger.error(f"Erro na validação dos documentos: {doc_serializer.errors}")
+
+    
+    processo_serializer = NovoPedidoSerializer(data=data)
+    if processo_serializer.is_valid():
+        processo_serializer.validated_data['documentos'] = documentos_data
+
+        # Aqui você atualiza o validated_data com o ID do cliente antes de salvar o processo.
+        processo_serializer.validated_data['idCliente'] = cliente_data['id']  # ou cliente_data.id se for um objeto
+        processo_obj = processo_serializer.save()
+
+    #Aqui vamos verificar se é financiamento de veiculo e se for criamos a instancia de financiamento e job
+    subservico = request.data.get('subservico', '')
+    nome_subservico = extrair_subservico(subservico)
+    # Funcao que cria as instancias de job e financiamento.
+    if nome_subservico == "Financiamento Veicular": 
+        client_job = {
+            'profissao': data.get('client_job[profissao]', None),
+            'cargo': data.get('client_job[cargo]', None),
+            'renda_mensal': data.get('client_job[renda_mensal]', None),
+            'data_admissao': data.get('client_job[data_admissao]', None),
+            'telefone_trabalho': data.get('client_job[telefone_trabalho]', None),
+            'empresa': data.get('client_job[empresa]', None),
+            'cep_trabalho': data.get('client_job[cep_trabalho]', None),
+            'logradouro_trabalho': data.get('client_job[logradouro_trabalho]', None),
+            'complemento_trabalho': data.get('client_job[complemento_trabalho]', None),
+            'numero_trabalho': data.get('client_job[numero_trabalho]',None),
+            'bairro_trabalho': data.get('client_job[bairro_trabalho]', None),
+            'cidade_trabalho': data.get('client_job[cidade_trabalho]', None),
+            'estado_trabalho': data.get('client_job[estado_trabalho]', None),
+            'nome_referencia' : data.get('financiamento_veiculo[nome_referencia]', None),
+            'telefone_referencia' : data.get('financiamento_veiculo[telefone_referencia]', None),
+        }
+             
+    # Compilando dados para financiamento_veiculo
+        financiamento_veiculo = {
+            'tipo_veiculo': data.get('financiamento_veiculo[tipo_veiculo]', None),
+            'marca': data.get('financiamento_veiculo[marca]', None),
+            'modelo': data.get('financiamento_veiculo[modelo]', None),
+            'ano_modelo' : data.get('financiamento_veiculo[ano]', None),
+            'placa' : data.get('financiamento_veiculo[placa]', None),
+            'versao' : data.get('financiamento_veiculo[versao]', None),
+            'estado_licenciamento' : data.get('financiamento_veiculo[estado_licenciamento]', None),
+            'valor' : data.get('financiamento_veiculo[valor]', None),
+            'entrada' : data.get('financiamento_veiculo[entrada]', None),
+            'prazo' : data.get('financiamento_veiculo[prazo]', None),    
+            'banco' : data.get('financiamento_veiculo[banco]', None),
+            'possui_carroceria' : data.get('financiamento_veiculo[possui_carroceria]', None),
+            'ano_fabricacao' : data.get('financiamento_veiculo[ano_fabricacao]', None),
+            'combustivel' : data.get('financiamento_veiculo[combustivel]', None),
+            'cambio' : data.get('financiamento_veiculo[cambio]', None),
+            
+        }
+            
+        try:
+            criar_client_job(client_job, processo_obj)
+            criar_financiamento_veiculo(financiamento_veiculo, processo_obj)
+        except ValueError as e:
+            print(e)
+            # Trate o erro conforme necessário
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST) 
+            
+    # Agora, vamos criar a transação associada a esse cliente
+    servico_id = data.get('servico')  #passa o id do serviço
+    print(servico_id)
+
+    transacao_obj = criar_transacao(cliente_data,processo_obj, servico_id,)
+
+    if not transacao_obj:
+        logger.error("Erro ao criar transação. Serviço não encontrado.")
+        return Response({"error": "Serviço não encontrado."}, status=status.HTTP_400_BAD_REQUEST)
+            
+    return Response(processo_serializer.data, status=status.HTTP_201_CREATED)
+        
 #Consultar os pedidos pelo id do cliente
 class NovoClienteDetailView(APIView):
 
@@ -383,7 +377,7 @@ class PedidosPorAfiliadoListView(generics.ListAPIView):
     serializer_class = ClienteSerializerConsulta
     pagination_class = StandardResultsSetPagination
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         """
         Este método irá retornar uma lista de pedidos para o afiliado especificado.

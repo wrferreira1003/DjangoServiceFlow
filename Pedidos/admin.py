@@ -5,6 +5,7 @@ from .models import Processos, Documento, ClientJob, FinanciamentoVeiculo, Clien
 class NovoClienteModelAdmin(admin.ModelAdmin):
     def get_list_display(self, request):
         return [field.name for field in self.model._meta.fields]
+
     
 @admin.register(ClientJob)
 class NovoClienteJob(admin.ModelAdmin):
