@@ -21,32 +21,10 @@ class Processos(models.Model):
 
   #Dados do cliente
   idCliente = models.CharField(max_length=10, blank=True, null=True)
-  #blank=True e null=True aceita ficar sem valor esse campo
-
-  filiacao1 = models.CharField(max_length=100, blank=True, null=True)
-  filiacao2 = models.CharField(max_length=100, blank=True, null=True) 
-  #Endereço do cliente
-  #estado = models.CharField(max_length=50, blank=True, null=True)
-  #logradouro = models.TextField(blank=True, null=True)
-  #complemento = models.TextField(blank=True, null=True)
-  #cidade = models.CharField(max_length=100, blank=True, null=True)
-  #bairro = models.CharField(max_length=100, blank=True, null=True)
-  #cep = models.CharField(max_length=9, blank=True, null=True)
-  #numero = models.CharField(max_length=9, blank=True, null=True)
-
-  #Endereço do secundario
-  estado_envolvido = models.CharField(max_length=50, blank=True, null=True)
-  logradouro_envolvido = models.TextField(blank=True, null=True)
-  complemento_envolvido = models.TextField(blank=True, null=True)
-  cidade_envolvido = models.CharField(max_length=100, blank=True, null=True)
-  bairro_envolvido = models.CharField(max_length=100, blank=True, null=True)
-  cep_envolvido = models.CharField(max_length=9, blank=True, null=True)
-  numero_envolvido = models.CharField(max_length=9, blank=True, null=True)
-  
+  fisico_juridico = models.CharField(max_length=50, blank=True, null=True)
   status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pendente')
   status_adm_afiliado = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pendente')
   data_pedido = models.DateTimeField(auto_now_add=True)
-  
   afiliado = models.ForeignKey(
     AfiliadosModel, 
     on_delete=models.SET_NULL, 
@@ -63,55 +41,39 @@ class Processos(models.Model):
         related_name='processos_funcionario',
         limit_choices_to={'user_type': 'FUNC'},
     )
-  
-
   servico = models.CharField(max_length=100, blank=True, null=True)
   subservico = models.CharField(max_length=100, blank=True, null=True)
-  
   servicoCadastro = models.ForeignKey(Servico, on_delete=models.SET_NULL, null=True, blank=True)
-
-  conjugue1 = models.CharField(max_length=100, blank=True, null=True)
-  conjugue2 = models.CharField(max_length=100, blank=True, null=True)
-  data_casamento = models.DateField(blank=True, null=True)
-
-
-  data_inicial = models.DateField(blank=True, null=True)
-  data_final = models.DateField(blank=True, null=True)
-  
-  data_obito = models.DateField(blank=True, null=True)
-  nome_falecido = models.CharField(max_length=100, blank=True, null=True)
-
-  #Dados do envolvido
-  nomeEnvolvido = models.CharField(max_length=100, blank=True, null=True)
-  sobrenomeEnvolvido = models.CharField(max_length=100, blank=True, null=True)
-  RegistroGeralEnvolvido = models.CharField(max_length=20, blank=True, null=True)
-  cpfEnvolvido = models.CharField(max_length=11, blank=True, null=True)
-  emailEnvolvido = models.EmailField(blank=True, null=True)
-  telefoneEnvolvido = models.CharField(max_length=15, blank=True, null=True) 
-
-  nomeCartorio = models.CharField(max_length=100, blank=True, null=True)
-  estadoCartorio = models.CharField(max_length=100, blank=True, null=True)
-  cidadeCartorio = models.CharField(max_length=100, blank=True, null=True)
-
-  livroCartorio = models.CharField(max_length=100, blank=True, null=True)
-  folhaCartorio = models.CharField(max_length=100, blank=True, null=True)
-  termo = models.CharField(max_length=100, blank=True, null=True)
-
   tipoDeEntrega = models.CharField(max_length=100, blank=True, null=True)
   FormaDePagamento = models.CharField(max_length=100, blank=True, null=True)
-  
-  nomeCartorioFirmaReconhecida = models.CharField(max_length=100, blank=True, null=True)
-  estadoCartorioFirmaReconhecida = models.CharField(max_length=100, blank=True, null=True)
-  livroCartorioFirmaReconhecida = models.CharField(max_length=100, blank=True, null=True)
   Observacoes = models.CharField(max_length=2000, blank=True, null=True)
-
-  temFilhosMenores = models.CharField(max_length=5, blank=True, null=True)
-  temBens = models.CharField(max_length=5, blank=True, null=True)
-  filhoIncapaz = models.CharField(max_length=5, blank=True, null=True)
   
   def __str__(self):
     return str(self.id)
 
+class Certidoes(models.Model):
+  processo = models.ForeignKey(Processos, on_delete=models.CASCADE,blank=True, null=True)
+  servico = models.CharField(max_length=100, blank=True, null=True)
+  filiacao1 = models.CharField(max_length=100, blank=True, null=True)
+  filiacao2 = models.CharField(max_length=100, blank=True, null=True)
+  conjugue1 = models.CharField(max_length=100, blank=True, null=True)
+  conjugue2 = models.CharField(max_length=100, blank=True, null=True) 
+  data_casamento = models.DateField(blank=True, null=True)
+  data_inicial = models.DateField(blank=True, null=True)
+  data_final = models.DateField(blank=True, null=True)
+  #Dados do falecido
+  data_obito = models.DateField(blank=True, null=True)
+  nome_falecido = models.CharField(max_length=100, blank=True, null=True)
+  
+  temFilhosMenores = models.CharField(max_length=5, blank=True, null=True)
+  temBens = models.CharField(max_length=5, blank=True, null=True)
+  filhoIncapaz = models.CharField(max_length=5, blank=True, null=True)
+
+  @classmethod
+  def get_field_names(cls):
+    return [f.name for f in cls._meta.get_fields() if f.name != "processo"]
+  
+  
 class Documento(models.Model):
     cliente = models.ForeignKey(Processos, on_delete=models.CASCADE,blank=True, null=True)
     arquivo = models.FileField(upload_to='documentos/')
@@ -120,6 +82,43 @@ class Documento(models.Model):
 
     def __str__(self):
         return f"Documento {self.id}: {self.descricao}"
+    
+class Cartorio(models.Model):
+    processo = models.ForeignKey(Processos, on_delete=models.CASCADE,blank=True, null=True)
+    nomeCartorio = models.CharField(max_length=100, blank=True, null=True)
+    estadoCartorio = models.CharField(max_length=100, blank=True, null=True)
+    cidadeCartorio = models.CharField(max_length=100, blank=True, null=True)
+    livroCartorio = models.CharField(max_length=100, blank=True, null=True)
+    folhaCartorio = models.CharField(max_length=100, blank=True, null=True)
+    termo = models.CharField(max_length=100, blank=True, null=True)
+    nomeCartorioFirmaReconhecida = models.CharField(max_length=100, blank=True, null=True)
+    estadoCartorioFirmaReconhecida = models.CharField(max_length=100, blank=True, null=True)
+    livroCartorioFirmaReconhecida = models.CharField(max_length=100, blank=True, null=True) 
+
+    @classmethod
+    def get_field_names(cls):
+        return [f.name for f in cls._meta.get_fields() if f.name != "processo"]
+
+class ClienteTerceiro(models.Model):
+    processo = models.ForeignKey(Processos, on_delete=models.CASCADE,blank=True, null=True)
+    nomeEnvolvido = models.CharField(max_length=100, blank=True, null=True) #envolvido
+    sobrenomeEnvolvido = models.CharField(max_length=100, blank=True, null=True) #envolvido
+    RegistroGeralEnvolvido = models.CharField(max_length=20, blank=True, null=True) #envolvido
+    cpfEnvolvido = models.CharField(max_length=11, blank=True, null=True) #envolvido
+    emailEnvolvido = models.EmailField(blank=True, null=True) #envolvido
+    telefoneEnvolvido = models.CharField(max_length=15, blank=True, null=True) #envolvido
+    
+    estado_envolvido = models.CharField(max_length=50, blank=True, null=True)
+    logradouro_envolvido = models.TextField(blank=True, null=True)
+    complemento_envolvido = models.TextField(blank=True, null=True)
+    cidade_envolvido = models.CharField(max_length=100, blank=True, null=True)
+    bairro_envolvido = models.CharField(max_length=100, blank=True, null=True)
+    cep_envolvido = models.CharField(max_length=9, blank=True, null=True)
+    numero_envolvido = models.CharField(max_length=9, blank=True, null=True)
+
+    @classmethod
+    def get_field_names(cls):
+        return [f.name for f in cls._meta.get_fields() if f.name != "processo"]
 
 class ClientJob(models.Model): 
     processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
@@ -143,7 +142,7 @@ class ClientJob(models.Model):
     
     @classmethod
     def get_field_names(cls):
-        return [f.name for f in cls._meta.get_fields()]
+        return [f.name for f in cls._meta.get_fields() if f.name != "processo"]
 
 class FinanciamentoVeiculo(models.Model): 
     processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
@@ -169,7 +168,7 @@ class FinanciamentoVeiculo(models.Model):
     
     @classmethod
     def get_field_names(cls):
-        return [f.name for f in cls._meta.get_fields()]
+        return [f.name for f in cls._meta.get_fields() if f.name != "processo"]
 
 class ClientEmpresarial(models.Model): 
     processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
@@ -178,9 +177,9 @@ class ClientEmpresarial(models.Model):
     cnpj = models.CharField(max_length=100, blank=True, null=True)
     data_abertura = models.DateField(blank=True, null=True)
     faturamento_mensal = models.CharField(max_length=100, blank=True, null=True)
-    contador_nome = models.CharField(max_length=9, blank=True, null=True)
-    telefone_contador = models.TextField(blank=True, null=True)
+    contador_nome = models.CharField(max_length=100, blank=True, null=True)
+    telefone_contador = models.TextField(max_length=15, blank=True, null=True)
     
     @classmethod
     def get_field_names(cls):
-        return [f.name for f in cls._meta.get_fields()]
+        return [f.name for f in cls._meta.get_fields() if f.name != "processo"]

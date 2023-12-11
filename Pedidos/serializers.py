@@ -1,6 +1,6 @@
 # serializers.py dentro do seu app
 from rest_framework import serializers
-from .models import Processos, Documento, ClientJob, FinanciamentoVeiculo
+from .models import Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, Cartorio, ClienteTerceiro, ClientEmpresarial
 from Afiliados.models import AfiliadosModel
 from Cliente.models import Cliente
 from financeiro.models import Transacao
@@ -49,6 +49,61 @@ class ClientJobSerializer(serializers.ModelSerializer):
 class FinanciamentoVeiculoSerializer(serializers.ModelSerializer):
     class Meta:
         model = FinanciamentoVeiculo
+        fields = '__all__'
+    
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None}
+
+#Serializer do modelo Cartorio
+class CartorioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cartorio
+        fields = '__all__'
+    
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None}
+
+#Serializer do modelo ClienteTerceiro
+class ClienteTerceiroSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClienteTerceiro
+        fields = '__all__'
+    
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None}
+
+#Serializer do modelo Certidoes
+class ClienteCertidoesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certidoes
+        fields = '__all__'
+    
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None}
+
+#Serializer do modelo ClientEmpresarial
+class ClientEmpresarialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClientEmpresarial
+        fields = '__all__'
+    
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None}
+
+#Serializer do modelo Certidao
+class CertidoesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certidoes
         fields = '__all__'
     
     #Retorno apenas dados que tem valores
