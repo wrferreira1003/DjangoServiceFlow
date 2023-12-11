@@ -56,11 +56,20 @@ class ClienteSerializer(serializers.ModelSerializer):
         fields = [ 'id',
                     'afiliado', 
                     'nome', 
-                    'cpf', 
+                    'cpf',    
                     'email', 
                     'password',
                     'telefone',
-                    'telefone2', 
+                    'telefone2',
+                    'RegistroGeral',
+                    'Data_emissao_rg',
+                    'orgao_emissor_rg',
+                    'estado_civil',
+                    'profissao',
+                    'data_nascimento',
+                    'genero',
+                    'naturalidade',
+                    'cnh',                    
                     'cep',
                     'estado',
                     'logradouro',
@@ -112,17 +121,25 @@ class ClienteSerializer(serializers.ModelSerializer):
         
         return instance
 
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cliente
         fields = [ 'id',
                     'afiliado', 
                     'nome', 
-                    'cpf', 
-                    'email', 
+                    'cpf',    
+                    'email',
                     'telefone',
-                    'telefone2', 
+                    'telefone2',
+                    'RegistroGeral',
+                    'Data_emissao_rg',
+                    'orgao_emissor_rg',
+                    'estado_civil',
+                    'profissao',
+                    'data_nascimento',
+                    'genero',
+                    'naturalidade',
+                    'cnh',                    
                     'cep',
                     'estado',
                     'logradouro',
@@ -136,11 +153,30 @@ class AtualizaClienteSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Cliente
-        fields = [
-            'afiliado', 'nome', 'cpf', 'email', 'password', 'telefone', 
-            'telefone2', 'cep', 'estado', 'logradouro', 'bairro', 
-            'cidade', 'complemento', 'numero'
-        ]
+        fields = [ 'afiliado', 
+                    'nome', 
+                    'cpf',    
+                    'email', 
+                    'password',
+                    'telefone',
+                    'telefone2',
+                    'RegistroGeral',
+                    'Data_emissao_rg',
+                    'orgao_emissor_rg',
+                    'estado_civil',
+                    'profissao',
+                    'data_nascimento',
+                    'genero',
+                    'naturalidade',
+                    'cnh',                    
+                    'cep',
+                    'estado',
+                    'logradouro',
+                    'bairro',
+                    'cidade',
+                    'complemento',
+                    'numero',
+                ]
         extra_kwargs = {
             'nome': {'required': False},
             'password': {'required': False},
@@ -154,6 +190,7 @@ class AtualizaClienteSerializer(serializers.ModelSerializer):
             'numero': {'required': False},
             'cpf': {'required': False, 'validators': []},
             'email': {'required': False, 'validators': []},
+
         }
     
     def update(self, instance, validated_data):
@@ -201,7 +238,16 @@ class ClienteExistenteSerializer(serializers.ModelSerializer):
                     'email', 
                     'password',
                     'telefone',
-                    'telefone2', 
+                    'telefone2',
+                    'RegistroGeral',
+                    'Data_emissao_rg',
+                    'orgao_emissor_rg',
+                    'estado_civil',
+                    'profissao',
+                    'data_nascimento',
+                    'genero',
+                    'naturalidade',
+                    'cnh',                    
                     'cep',
                     'estado',
                     'logradouro',
