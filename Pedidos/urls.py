@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from .views import ClienteFinanciamentoVeiculo, ClienteDetailViewAlteracaoStatusAdmAfiliado,criar_cliente_com_relacionados,NovoClienteDetailView,TodosClientesView,ClienteDetailView,TodosClientesViewSemFiltro,ClienteDetailViewAlteracao,AtualizaClienteView,PedidosPorAfiliadoListView, PedidosPorClienteListView, delete_documento_api,PedidosPorFuncionarioListView
+from .views import ClienteFinanciamentoImoveis, ClienteFinanciamentoVeiculo, ClienteDetailViewAlteracaoStatusAdmAfiliado,criar_cliente_com_relacionados,NovoClienteDetailView,TodosClientesView,ClienteDetailView,TodosClientesViewSemFiltro,ClienteDetailViewAlteracao,AtualizaClienteView,PedidosPorAfiliadoListView, PedidosPorClienteListView, delete_documento_api,PedidosPorFuncionarioListView
 from django.urls import path
 
 app_name = 'pedidos'
@@ -11,6 +11,7 @@ urlpatterns = router.urls
 urlpatterns = [
     path('criar_cliente/', criar_cliente_com_relacionados, name='criar_cliente_com_relacionados'),
     path('financiamento/', ClienteFinanciamentoVeiculo, name='processo_financiamento'),
+    path('imoveis/', ClienteFinanciamentoImoveis, name='processo_financiamento_imoveis'),
     
     
     path('requests/<str:id>/', NovoClienteDetailView.as_view(), name='cliente-detail'),

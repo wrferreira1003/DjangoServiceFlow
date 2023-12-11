@@ -18,9 +18,11 @@ STATUS_CHOICES = [
 class Processos(models.Model):
   from Afiliados.models import AfiliadosModel
   from Servicos.models import Servico
+  from Cliente.models import Cliente
 
   #Dados do cliente
-  idCliente = models.CharField(max_length=10, blank=True, null=True)
+  cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='processos', null=True, blank=True)
+  #idCliente = models.CharField(max_length=10, blank=True, null=True)
   fisico_juridico = models.CharField(max_length=50, blank=True, null=True)
   status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pendente')
   status_adm_afiliado = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pendente')
@@ -72,7 +74,6 @@ class Certidoes(models.Model):
   @classmethod
   def get_field_names(cls):
     return [f.name for f in cls._meta.get_fields() if f.name != "processo"]
-  
   
 class Documento(models.Model):
     cliente = models.ForeignKey(Processos, on_delete=models.CASCADE,blank=True, null=True)
@@ -180,6 +181,54 @@ class ClientEmpresarial(models.Model):
     contador_nome = models.CharField(max_length=100, blank=True, null=True)
     telefone_contador = models.TextField(max_length=15, blank=True, null=True)
     
+    @classmethod
+    def get_field_names(cls):
+        return [f.name for f in cls._meta.get_fields() if f.name != "processo"]
+
+class FinanciamentoImovel(models.Model): 
+
+    STATUS_FINANCIAMENTO = [
+      ('Pendente de Envio de Documentação', 'Pendente de Envio de Documentação'),
+      ('Em análise', 'Em análise'),
+      ('Aprovado', 'Aprovado'),
+      ('Reprovado', 'Reprovado'),
+    ]
+
+    processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
+    estado_imovel = models.CharField(max_length=100, blank=True, null=True)
+    tipo_imovel = models.CharField(max_length=100, blank=True, null=True)
+    situacao_imovel = models.CharField(max_length=100, blank=True, null=True)
+    valor_imovel = models.CharField(max_length=100, blank=True, null=True)
+    compor_renda = models.CharField(max_length=100, blank=True, null=True)
+    valor_financiamento = models.CharField(max_length=100, blank=True, null=True)
+    quantas_parcelas = models.CharField(max_length=100, blank=True, null=True)
+    despesas_extra = models.CharField(max_length=100, blank=True, null=True)
+    amortizacao = models.CharField(max_length=100, blank=True, null=True)
+    agencia = models.CharField(max_length=100, blank=True, null=True)
+    conta = models.CharField(max_length=100, blank=True, null=True)
+    utilizara_fgts = models.CharField(max_length=100, blank=True, null=True)
+    possui_dependentes = models.CharField(max_length=100, blank=True, null=True)
+    recebe_qual_banco = models.CharField(max_length=100, blank=True, null=True)
+
+    recepcao_documentos = models.CharField(max_length=100, choices=STATUS_FINANCIAMENTO, blank=True, null=True)
+    analise_de_documentos = models.CharField(max_length=100, choices=STATUS_FINANCIAMENTO, blank=True, null=True)
+    analise_de_credito = models.CharField(max_length=100, choices=STATUS_FINANCIAMENTO, blank=True, null=True)
+    avaliacao_do_imovel = models.CharField(max_length=100, choices=STATUS_FINANCIAMENTO, blank=True, null=True)
+    analise_juridica = models.CharField(max_length=100, choices=STATUS_FINANCIAMENTO, blank=True, null=True)
+    analise_juridica = models.CharField(max_length=100, choices=STATUS_FINANCIAMENTO, blank=True, null=True)
+    registro_de_contrato = models.CharField(max_length=100, choices=STATUS_FINANCIAMENTO, blank=True, null=True)
+    #Criar novos campos precisa atualizar a views criar_cliente_com_relacionados
+    
+    #- POSSUI ALGUM DOS PRODUTOS ATIVOS? (EMPRÉSTIMOS, FINANCIAMENTOS, CONSÓRCIOS, CREDIÁRIO, CARTÃO DE CRÉDITO, PREVIDÊNCIA PRIVADA)
+    possui_produtos_ativos = models.CharField(max_length=10, null=True, blank=True) # Armazena se o cliente possui produtos ativos
+    detalhes_produtos_ativos = models.JSONField(null=True, blank=True) # Armazenaar uma lista de produtos ativos em formato json
+    
+    #- INSTITUIÇÃO FINANCEIRA / VALOR A PAGAR / QTDE. DE PRESTAÇÕES A VENCER / DATA DA ÚLTIMA PRESTAÇÃO PAGA
+    detalhes_instituicao_financeira = models.JSONField(null=True, blank=True)
+    
+    #ALIMENTAÇÃO, COMBUSTÍVEL/TRANSPORTE, CONTAS DE TELEFONE, CONDOMÍNIO, EDUCAÇÃO, ALUGUEL, PENSÃO ALIMENTICIA,DESPESAS COM SAÚDE, CONTA DE LUZ/ÁGUA
+    valores_aproximados_despesas = models.JSONField(null=True, blank=True)
+
     @classmethod
     def get_field_names(cls):
         return [f.name for f in cls._meta.get_fields() if f.name != "processo"]

@@ -3,13 +3,13 @@ from rest_framework import status, generics
 from datetime import datetime
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .serializers import ClienteCertidoesSerializer, ClienteTerceiroSerializer, CartorioSerializer, ClientJobSerializer, FinanciamentoVeiculoSerializer,ClienteSerializerAlteracaoAdmAfiliado, NovoPedidoSerializer,DocumentoSerializer, ClienteSerializerConsulta,NovoClienteSerializerConsulta, ClienteSerializerAlteracao,AtualizaClienteSerializer,ClientEmpresarialSerializer
+from .serializers import ClienteCertidoesSerializer, ClienteTerceiroSerializer, CartorioSerializer, ClientJobSerializer, FinanciamentoVeiculoSerializer,ClienteSerializerAlteracaoAdmAfiliado, NovoPedidoSerializer,DocumentoSerializer, ClienteSerializerConsulta, ClienteSerializerAlteracao,AtualizaClienteSerializer,ClientEmpresarialSerializer, FinanciamentoImovelSerializer
 
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, ClientEmpresarial, ClienteTerceiro, Cartorio
+from .models import Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, ClientEmpresarial, ClienteTerceiro, Cartorio, FinanciamentoImovel
 from Cliente.models import Cliente
 from Cliente.serializers import ClienteSerializer, ClienteExistenteSerializer
 from Servicos.models import Servico
@@ -20,6 +20,7 @@ import logging
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.core.exceptions import ValidationError
+import json
 
 logger = logging.getLogger('django')
 
@@ -43,8 +44,9 @@ def criar_ou_atualizar_cliente(data):
         cliente_serializer = ClienteSerializer(data=data)
     
     if cliente_serializer.is_valid(raise_exception=True):
-        cliente_serializer.save()
-        return cliente_serializer.data, cliente_existente is None
+        cliente_obj = cliente_serializer.save()
+    
+        return cliente_obj.id, cliente_obj, cliente_existente is None
 
     return None, False
 
@@ -52,28 +54,19 @@ def criar_ou_atualizar_cliente(data):
 def criar_transacao(cliente_data,processo_obj, servico_id):
     logger.info("Iniciando a criação de uma transacao...")
     try:
-        cliente_instance = Cliente.objects.get(id=cliente_data.get('id'))
-
-        #afiliado_instance = AfiliadosModel.objects.get(id=cliente_data.get('afiliado'))
-        afiliado_id = cliente_data.get('afiliado')
-        if afiliado_id:
-            afiliado_instance = AfiliadosModel.objects.get(id=afiliado_id)
-        else:
-            afiliado_instance = None
+        cliente_instance = cliente_data 
+        afiliado_instance = cliente_data.afiliado if cliente_data.afiliado else None
         
-        pedido_instance = Processos.objects.get(id=processo_obj.id)
+        pedido_instance = processo_obj
         servico_instance = Servico.objects.get(pk=servico_id)
-
-        servico_obj = Servico.objects.get(pk=servico_id)
-        preco = servico_obj.preco
 
         transacao_data = {
             "cliente": cliente_instance,
-            "afiliado": afiliado_instance,  # Assumindo que o cliente tem um campo afiliado
+            "afiliado": afiliado_instance,
             "servico": servico_instance,
-            "pedido": pedido_instance,  # Assumindo que a relação OneToOne entre Processos e Transacao é essa
-            "preco": preco,  # Supondo que o modelo Servico tenha um campo chamado "valor"
-            "FormaDePagamento": processo_obj.FormaDePagamento,  # você pode definir isso conforme necessário
+            "pedido": pedido_instance,
+            "preco": servico_instance.preco,  # Supondo que o modelo Servico tenha um campo chamado "preco"
+            "FormaDePagamento": processo_obj.FormaDePagamento,
             "statusPagamento": 'Link de pagamento não disponivel'
         }
         logger.info(transacao_data)
@@ -81,6 +74,7 @@ def criar_transacao(cliente_data,processo_obj, servico_id):
         return Transacao.objects.create(**transacao_data)
     except Exception as e:
         logger.error(f"Erro ao criar transação: {e}")
+        print(f"Erro ao criar transação: {e}")
         return None
 
 #Funcao que cria os Dados de trabalho do cliente
@@ -99,6 +93,20 @@ def criar_client_job(dados_client_job, processo_obj):
         logger.error(f"Erro na validação dos documentos: {client_job_serializer.errors}")
         raise ValidationError(f"Erro na validação do ClientJob: {client_job_serializer.errors}")
 
+def criar_financiamento_imoveis(dados_client_job, processo_obj):
+    
+    client_job_serializer = FinanciamentoImovelSerializer(data=dados_client_job)
+    #print('dados client job',dados_client_job)
+
+    if client_job_serializer.is_valid():
+        #print('client job serializer',client_job_serializer)
+        
+        client_job_serializer.save(processo=processo_obj)
+        return client_job_serializer
+    else:
+        # Pode levantar uma exceção ou tratar o erro conforme a necessidade
+        logger.error(f"Erro na validação dos documentos: {client_job_serializer.errors}")
+        raise ValidationError(f"Erro na validação do Financiamento Imobiliario: {client_job_serializer.errors}")
 #Funcao que cria os Dados de trabalho do cliente
 def criar_client_Juridico(dados_client_juridico, processo_obj):
     
@@ -147,7 +155,6 @@ def criar_cliente_terceiro(dados_cliente_terceiro, processo_obj):
         # Pode levantar uma exceção ou tratar o erro conforme a necessidade
         logger.error(f"Erro na validação do clienteTerceiro: {cliente_terceiro_serializer.errors}")
         raise ValidationError(f"Erro na validação do clienteTerceiro: {cliente_terceiro_serializer.errors}")
-
 
 #Funcao que cria os Dados de certidoes dos clientes
 def criar_certidoes(dados_certidoes, processo_obj):
@@ -234,13 +241,28 @@ def process_documents(files, data):
 
     return documentos_data
 
-def build_process_data(data, model):
-    data_fields = model.get_field_names()
-    data_obj = {}
-    for field in data_fields:
-        data_obj[field] = data.get(field, None)
-    return data_obj
+def formatar_data_coluna(nome_coluna, data):
+    valor_coluna = data.get(nome_coluna)
+    if valor_coluna:
+        data_formatada = formatar_data(valor_coluna[0] if isinstance(valor_coluna, list) else valor_coluna, '%d/%m/%Y')
+        if data_formatada:
+            data[nome_coluna] = data_formatada
+        else:
+            return Response({'error': f'Formato inválido para {nome_coluna}.'}, status=status.HTTP_400_BAD_REQUEST)
+    return data
 
+#Funcao que cria um novo pedido ou atualiza um pedido existente
+def atualizar_ou_criar(serializer, instance, data):
+    instance_fields = instance.get_field_names() if instance else []
+    instance_data = {
+        field: data.get(field) for field in instance_fields if field in data
+    }
+    if instance_data:
+        instance_serializer = serializer(instance, data=instance_data, partial=True)
+        if instance_serializer.is_valid():
+            instance_serializer.save()
+        else:
+            return Response(instance_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 #----------------------------------------------------------------------------------------------#     
 #Consultar os pedidos pelo id do cliente
 class NovoClienteDetailView(APIView):
@@ -248,7 +270,7 @@ class NovoClienteDetailView(APIView):
     def get(self, request, id, format=None):
         clientes = Processos.objects.filter(idCliente=id)
         if clientes.exists():
-            serializer = NovoClienteSerializerConsulta(clientes, many=True)
+            serializer = ClienteSerializerConsulta(clientes, many=True)
             return Response(serializer.data)
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -256,17 +278,18 @@ class NovoClienteDetailView(APIView):
 #Consultar todos os pedidos, pelo painel do administrado.        
 class TodosClientesViewSemFiltro(ListCreateAPIView):
     pagination_class = StandardResultsSetPagination
-    queryset = Processos.objects.all()
+    queryset = Processos.objects.all().order_by('-data_pedido')
     serializer_class = ClienteSerializerConsulta
 
+
 class TodosClientesView(ListCreateAPIView):
-    queryset = Processos.objects.all()
-    serializer_class = NovoClienteSerializerConsulta
+    queryset = Processos.objects.all().order_by('-data_pedido')
+    serializer_class = ClienteSerializerConsulta
 
 #Excluir processos do banco de dados
 class ClienteDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Processos.objects.all()
-    serializer_class = NovoClienteSerializerConsulta
+    serializer_class = ClienteSerializerConsulta
     lookup_field = 'id'
 
 #Alteracao de status no banco de dados do campo AfiliadoCliente
@@ -287,39 +310,56 @@ def formatar_data(data_string, formato_origem, formato_destino='%Y-%m-%d'):
         return datetime.strptime(data_string, formato_origem).strftime(formato_destino)
     except ValueError:
         return None
-    
+
+#Atualizar os dados do cliente 
 @api_view(['PATCH'])
-def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar o registro
+def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar o registro 
     try:
-        cliente = Processos.objects.get(pk=id)  # Obtenha o cliente pelo ID
+        processo = Processos.objects.get(pk=id)  # Obtenha o cliente pelo ID
+        cliente = Cliente.objects.get(pk=processo.cliente.id)  # Obtenha o cliente pelo ID
     except Processos.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
-
-    #obter o ClientJob e o FinanciamentoVeiculo associados, ou defina-os como None se eles não existirem
-    client_job = ClientJob.objects.filter(processo=cliente).first()
-    financiamento_veiculo = FinanciamentoVeiculo.objects.filter(processo=cliente).first()
-
-
-    data = request.data.copy()
-    #print(data)
-    #Data de nascimento esta chegando no formato brasil, preciso ajustar antes de salvar
-    data_nascimento = data.get('data_nascimento')
-    if data_nascimento:
-        data_formatada = formatar_data(data_nascimento[0] if isinstance(data_nascimento, list) else data_nascimento, '%d/%m/%Y')
-        if data_formatada:
-            data['data_nascimento'] = data_formatada
-        else:
-            return Response({'error': 'Formato inválido para data de nascimento.'}, status=status.HTTP_400_BAD_REQUEST)
-            
-    #Data de casamento esta chegando no formato brasil, preciso ajustar antes de salvar
-    data_casamento = data.get('data casamento')
-    if data_casamento:
-        data_formatada = formatar_data(data_casamento[0] if isinstance(data_casamento, list) else data_casamento, '%d/%m/%Y')
-        if data_formatada:
-            data['data_casamento'] = data_formatada
-        else:
-            return Response({'error': 'Formato inválido para data de casamento.'}, status=status.HTTP_400_BAD_REQUEST)
     
+    #obter o ClientJob e o FinanciamentoVeiculo associados, ou defina-os como None se eles não existirem
+    client_job = ClientJob.objects.filter(processo=processo).first()
+    financiamento_veiculo = FinanciamentoVeiculo.objects.filter(processo=processo).first()
+    client_empresarial = ClientEmpresarial.objects.filter(processo=processo).first()
+    cliente_terceiro = ClienteTerceiro.objects.filter(processo=processo).first()
+    cartorio = Cartorio.objects.filter(processo=processo).first()
+    certidoes = Certidoes.objects.filter(processo=processo).first()
+    imoveis = FinanciamentoImovel.objects.filter(processo=processo).first()
+   
+    
+    data = request.data.copy()
+
+    #Ajustes das datas antes de salvar no banco de dados
+    data_nascimento = formatar_data_coluna('data_nascimento', data)
+    if isinstance(data_nascimento, Response):
+        return data_nascimento
+    
+    data_casamento = formatar_data_coluna('data_casamento', data)
+    if isinstance(data_casamento, Response):
+        return data_casamento
+    
+    data_inicial = formatar_data_coluna('data_inicial', data)
+    if isinstance(data_inicial, Response):
+        return data_inicial
+    
+    data_final = formatar_data_coluna('data_final', data)
+    if isinstance(data_final, Response):
+        return data_final
+
+    data_obito = formatar_data_coluna('data_obito', data)
+    if isinstance(data_obito, Response):
+        return data_obito
+
+    data_admissao = formatar_data_coluna('data_admissao', data)
+    if isinstance(data_admissao, Response):
+        return data_admissao 
+
+    data_abertura = formatar_data_coluna('data_abertura', data)
+    if isinstance(data_abertura, Response):
+        return data_abertura          
     
     files = request.FILES
 
@@ -335,6 +375,13 @@ def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar
                 'arquivo': arquivo
             })
 
+    # Atualizando os dados dos Clientes
+    cliente_serializer = ClienteSerializer(cliente, data=data, partial=True)  # Crie um novo serializer para o cliente
+    if cliente_serializer.is_valid():
+        cliente_serializer.save()  # Salve os dados atualizados
+    else:
+        return Response(cliente_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     # Remover campos de documentos do data original para evitar problemas com o serializador
     for key in list(data.keys()):
         if key.startswith('documentos'):
@@ -343,7 +390,7 @@ def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar
     data['documentos'] = documentos_data
 
     
-    cliente_serializer = AtualizaClienteSerializer(cliente, data=data, partial=True)  
+    cliente_serializer = AtualizaClienteSerializer(processo, data=data, partial=True)  
     if cliente_serializer.is_valid():
         cliente_serializer.validated_data['documentos'] = documentos_data
         cliente_serializer.save()
@@ -352,40 +399,42 @@ def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar
     
 
     # Atualize ou crie o ClientJob
-    client_job_fields = client_job.get_field_names() if client_job else []
-    #print(client_job_fields)
-    #incluir um campo no client_job_data apenas se ele estiver presente na solicitação. Aqui está como você pode fazer isso:
-    client_job_data = {
-        field: data.get(field) for field in client_job_fields if field in data
-    }
-    if client_job_data:
-        client_job_serializer = ClientJobSerializer(client_job, data=client_job_data, partial=True)
-        if client_job_serializer.is_valid():
-            client_job_serializer.save()
-        else:
-            return Response(client_job_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    financiamento_veiculo_fields = financiamento_veiculo.get_field_names() if financiamento_veiculo else []
+    resposta = atualizar_ou_criar(ClientJobSerializer, client_job, data)
+    if isinstance(resposta, Response):
+        return resposta
     # Atualize ou crie o FinanciamentoVeiculo
-    financiamento_veiculo_data = {
-        field: data.get(field) for field in financiamento_veiculo_fields if field in data
-    }
-    #print(financiamento_veiculo_data)
-    if financiamento_veiculo_data:
-        financiamento_veiculo_serializer = FinanciamentoVeiculoSerializer(financiamento_veiculo, data=financiamento_veiculo_data, partial=True)
-        if financiamento_veiculo_serializer.is_valid():
-            financiamento_veiculo_serializer.save()
-        else:
-            return Response(financiamento_veiculo_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    resposta = atualizar_ou_criar(FinanciamentoVeiculoSerializer, financiamento_veiculo, data)
+    if isinstance(resposta, Response):
+        return resposta
+    # Atualize ou crie o ClientEmpresarial
+    resposta = atualizar_ou_criar(ClienteCertidoesSerializer,   certidoes , data)
+    if isinstance(resposta, Response):
+        return resposta
+    # Atualize ou crie o ClientEmpresarial
+    resposta = atualizar_ou_criar(ClienteTerceiroSerializer,   cliente_terceiro , data)
+    if isinstance(resposta, Response):
+        return resposta
+    # Atualize ou crie o ClientEmpresarial
+    resposta = atualizar_ou_criar(CartorioSerializer,   cartorio , data)
+    if isinstance(resposta, Response):
+        return resposta
+    # Atualize ou crie o ClientEmpresarial
+    resposta = atualizar_ou_criar(ClientEmpresarialSerializer,   client_empresarial , data)
+    if isinstance(resposta, Response):
+        return resposta
+    # Atualize ou crie o FinanciamentoImovel
+    resposta = atualizar_ou_criar(FinanciamentoImovelSerializer, imoveis, data)
+    if isinstance(resposta, Response):
+        return resposta
+    
     
     return Response(cliente_serializer.data, status=status.HTTP_200_OK)
-
 
 #Consultar os pedidos pelo id do afiliado
 class PedidosPorAfiliadoListView(generics.ListAPIView):
     serializer_class = ClienteSerializerConsulta
     pagination_class = StandardResultsSetPagination
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """
@@ -404,7 +453,7 @@ class PedidosPorFuncionarioListView(generics.ListAPIView):
         O funcionário é determinado pelo `id` passado na URL.
         """
         funcionario_id = self.kwargs['funcionario_id']
-        return Processos.objects.filter(funcionario__id=funcionario_id)  
+        return Processos.objects.filter(funcionario__id=funcionario_id).order_by('-data_pedido')  
 
 class PedidosPorClienteListView(generics.ListAPIView):
     serializer_class = ClienteSerializerConsulta
@@ -415,7 +464,7 @@ class PedidosPorClienteListView(generics.ListAPIView):
         O afiliado é determinado pelo `id` passado na URL.
         """
         cliente_id = self.kwargs['idCliente']
-        return Processos.objects.filter(idCliente=cliente_id)
+        return Processos.objects.filter(idCliente=cliente_id).order_by('-data_pedido')
     
 @api_view(['DELETE'])
 def delete_documento_api(request, documento_id):
@@ -437,14 +486,16 @@ def criar_cliente_com_relacionados(request):
     data = request.data.copy()  # Mudança aqui
 
     # Chamada para a função que cria ou atualiza o cliente
-    try:
-        cliente_data, is_new = criar_ou_atualizar_cliente(data)
-    except Exception as e:
+    cliente_id, cliente_data, is_new = criar_ou_atualizar_cliente(data)
+   
+    if cliente_id is None:
         logger.error(f"Erro ao criar ou atualizar cliente: {str(e)}")
         print(e)
         return Response({"error": "Erro ao criar ou atualizar cliente."}, status=status.HTTP_400_BAD_REQUEST)
-
-
+    
+    # Adicione o ID do cliente ao dicionário 'data'
+    data['cliente'] = cliente_id 
+ 
     # Incluindo os documentos processados na data
     documentos_data = process_documents(request.FILES, data)
     data['documentos'] = documentos_data 
@@ -458,8 +509,9 @@ def criar_cliente_com_relacionados(request):
     #raise_exception=True: Isso faz com que o serializador levante uma exceção se a validação falhar
     processo_serializer = NovoPedidoSerializer(data=data) # Aqui você passa o data com os documentos
     processo_serializer.is_valid(raise_exception=True) # Aqui você testa a validação do processo e dos documentos
+    
+
     processo_serializer.validated_data['documentos'] = documentos_data
-    processo_serializer.validated_data['idCliente'] = cliente_data['id']  # ou cliente_data.id se for um objeto
     processo_obj = processo_serializer.save() # Aqui você obtém o objeto Processos criado
 
 
@@ -468,7 +520,7 @@ def criar_cliente_com_relacionados(request):
     cartorio_data = {}
     for field in cartorio_data_fields:
         cartorio_data[field] = data.get(f'cartorio[{field}]', None)
-    print(cartorio_data)
+    #print(cartorio_data)
     if cartorio_data and not all(value is None for value in cartorio_data.values()):
         try:
             criar_cartorio(cartorio_data, processo_obj)
@@ -482,7 +534,7 @@ def criar_cliente_com_relacionados(request):
     cliente_terceiro_data = {}
     for field in cliente_terceiro_data_fields:
         cliente_terceiro_data[field] = data.get(f'cliente_terceiro[{field}]', None)
-    print(cliente_terceiro_data)
+    #print(cliente_terceiro_data)
     if cliente_terceiro_data and not all(value is None for value in cliente_terceiro_data.values()):
         try:
             criar_cliente_terceiro(cliente_terceiro_data, processo_obj)
@@ -497,7 +549,7 @@ def criar_cliente_com_relacionados(request):
     certidoes_data = {}
     for field in certidoes_data_fields:
         certidoes_data[field] = data.get(f'certidoes[{field}]', None)
-    print(certidoes_data)
+    #print(certidoes_data)
     if certidoes_data and not all(value is None for value in certidoes_data.values()):
         try:
             criar_certidoes(certidoes_data, processo_obj)
@@ -524,13 +576,15 @@ def ClienteFinanciamentoVeiculo(request):
     logger.info("Iniciando a criação do cliente e relacionados...")
     data = request.data.copy()  # Mudança aqui
 
-     # Chamada para a função que cria ou atualiza o cliente
-    try:
-        cliente_data, is_new = criar_ou_atualizar_cliente(data)
-    except Exception as e:
+    # Chamada para a função que cria ou atualiza o cliente
+    cliente_id, cliente_data, is_new = criar_ou_atualizar_cliente(data)
+    if cliente_id is None:
         logger.error(f"Erro ao criar ou atualizar cliente: {str(e)}")
+        #print(e)
         return Response({"error": "Erro ao criar ou atualizar cliente."}, status=status.HTTP_400_BAD_REQUEST)
     
+    # Adicione o ID do cliente ao dicionário 'data'
+    data['cliente'] = cliente_id 
     
     # Incluindo os documentos processados na data
     documentos_data = process_documents(request.FILES, data)
@@ -545,8 +599,8 @@ def ClienteFinanciamentoVeiculo(request):
     #raise_exception=True: Isso faz com que o serializador levante uma exceção se a validação falhar
     processo_serializer = NovoPedidoSerializer(data=data) # Aqui você passa o data com os documentos
     processo_serializer.is_valid(raise_exception=True) # Aqui você testa a validação do processo e dos documentos
+    
     processo_serializer.validated_data['documentos'] = documentos_data
-    processo_serializer.validated_data['idCliente'] = cliente_data['id']  # ou cliente_data.id se for um objeto
     processo_obj = processo_serializer.save() # Aqui você obtém o objeto Processos criado
 
     #Aqui vamos verificar se é financiamento de veiculo e se for criamos a instancia de financiamento e job
@@ -584,6 +638,67 @@ def ClienteFinanciamentoVeiculo(request):
         except ValueError as e:
             logger.error(f"Erro na criação do client_job e financiamento_veiculo: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST) 
+            
+    
+    #Aqui criamos a instancia de transacao
+    transacao_obj = criar_transacao(cliente_data, processo_obj, data.get('servico'))
+    if not transacao_obj:
+        logger.error("Erro ao criar transação. Serviço não encontrado.")
+        return Response({"error": "Serviço não encontrado."}, status=status.HTTP_400_BAD_REQUEST)
+            
+    return Response(processo_serializer.data, status=status.HTTP_201_CREATED)
+
+@transaction.atomic # Isso garante que todas as operações de banco de dados sejam executadas ou nenhuma delas seja executada
+@api_view(['POST'])
+def ClienteFinanciamentoImoveis(request):
+    logger.info("Iniciando a criação do cliente e relacionados...")
+    data = request.data.copy()  # Mudança aqui
+
+    # Chamada para a função que cria ou atualiza o cliente
+    cliente_id, cliente_data, is_new = criar_ou_atualizar_cliente(data)
+    if cliente_id is None:
+        logger.error(f"Erro ao criar ou atualizar cliente: {str(e)}")
+        #print(e)
+        return Response({"error": "Erro ao criar ou atualizar cliente."}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Adicione o ID do cliente ao dicionário 'data'
+    data['cliente'] = cliente_id 
+    
+    # Incluindo os documentos processados na data
+    documentos_data = process_documents(request.FILES, data)
+    data['documentos'] = documentos_data 
+
+    # Vamos testar a validação dos documentos aqui
+    doc_serializer = DocumentoSerializer(data=documentos_data, many=True)
+    doc_serializer.is_valid(raise_exception=True)
+ 
+        
+    #Validacao e criacao do processo.
+    #raise_exception=True: Isso faz com que o serializador levante uma exceção se a validação falhar
+    processo_serializer = NovoPedidoSerializer(data=data) # Aqui você passa o data com os documentos
+    processo_serializer.is_valid(raise_exception=True) # Aqui você testa a validação do processo e dos documentos
+    
+    processo_serializer.validated_data['documentos'] = documentos_data
+    processo_obj = processo_serializer.save() # Aqui você obtém o objeto Processos criado
+
+    json_str = data['financiamento_imoveis']
+    #print(json_str)
+
+    # Converter a string JSON em um dicionário
+    financiamento_imoveis_data = json.loads(json_str)
+
+    # Funcao que cria as instancias de job e financiamento imoveis.
+    imoveis_fields = FinanciamentoImovel.get_field_names() # Pegando os nomes dos campos do banco de dados
+    #print(cliente_juridico_fields)
+    financiamento_imoveis = {} # Criando um dicionario vazio
+    for field in imoveis_fields: #Percorrendo os campos do banco de dados
+        financiamento_imoveis[field] = financiamento_imoveis_data.get(field, None) 
+    print(financiamento_imoveis)               
+    try:        
+        criar_financiamento_imoveis(financiamento_imoveis, processo_obj) # Chamando a funcao que cria o client_job
+    except ValueError as e:
+        logger.error(f"Erro na criação do Financiamento de Imoveis: {str(e)}")
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST) 
             
     
     #Aqui criamos a instancia de transacao

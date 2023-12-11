@@ -46,5 +46,9 @@ class Cliente(models.Model):
         return check_password(raw_password, self.password)
  
     def __str__(self):
-        return self.nome
+        return str(self.id)
+
+    @classmethod
+    def get_field_names(cls):
+        return [f.name for f in cls._meta.get_fields() if f.name != "afiliado"]    
 
