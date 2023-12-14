@@ -39,6 +39,9 @@ class Cliente(models.Model):
     complemento = models.CharField(max_length=300, null=True, blank=True)
     numero = models.IntegerField(null=True, blank=True)
 
+    nome_mae = models.CharField(max_length=100, null=True, blank=True)
+    nome_pai = models.CharField(max_length=100, null=True, blank=True)
+
     is_validated = models.BooleanField(default=False)
     validation_token = models.CharField(max_length=255, unique=True, null=True, blank=True)
     
@@ -46,5 +49,9 @@ class Cliente(models.Model):
         return check_password(raw_password, self.password)
  
     def __str__(self):
-        return self.nome
+        return str(self.id)
+
+    @classmethod
+    def get_field_names(cls):
+        return [f.name for f in cls._meta.get_fields() if f.name != "afiliado"]    
 

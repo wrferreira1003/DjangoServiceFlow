@@ -77,6 +77,8 @@ class ClienteSerializer(serializers.ModelSerializer):
                     'cidade',
                     'complemento',
                     'numero',
+                    'nome_mae',
+                    'nome_pai',
                 ]
         
     #Aplicando as validacoes nos campos por seguranca
@@ -147,6 +149,8 @@ class UserSerializer(serializers.ModelSerializer):
                     'cidade',
                     'complemento',
                     'numero',
+                    'nome_mae',
+                    'nome_pai',
                 ]
 
 class AtualizaClienteSerializer(serializers.ModelSerializer):
@@ -176,6 +180,8 @@ class AtualizaClienteSerializer(serializers.ModelSerializer):
                     'cidade',
                     'complemento',
                     'numero',
+                    'nome_mae',
+                    'nome_pai',
                 ]
         extra_kwargs = {
             'nome': {'required': False},
@@ -190,6 +196,7 @@ class AtualizaClienteSerializer(serializers.ModelSerializer):
             'numero': {'required': False},
             'cpf': {'required': False, 'validators': []},
             'email': {'required': False, 'validators': []},
+
 
         }
     
@@ -255,6 +262,8 @@ class ClienteExistenteSerializer(serializers.ModelSerializer):
                     'cidade',
                     'complemento',
                     'numero',
+                    'nome_mae',
+                    'nome_pai',
                 ]
 
     #Removendo o campo password dos dados retornados

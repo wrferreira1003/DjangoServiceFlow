@@ -1,6 +1,6 @@
 # serializers.py dentro do seu app
 from rest_framework import serializers
-from .models import Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, Cartorio, ClienteTerceiro, ClientEmpresarial
+from .models import FinanciamentoImovel,Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, Cartorio, ClienteTerceiro, ClientEmpresarial
 from Afiliados.models import AfiliadosModel
 from Cliente.models import Cliente
 from financeiro.models import Transacao
@@ -34,6 +34,24 @@ def formatar_data(data_string, formato_entrada=None, formato_saida="%d/%m/%Y"):
     # Retorna a string original se nenhuma conversão funcionar
     return data_string
 
+#Serializer do modelo Cliente do model cliente
+class ClienteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cliente
+        exclude = ['password', 'validation_token', 'is_validated']
+
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+
+        if "data_nascimento" in result:
+            result["data_nascimento"] = formatar_data(result['data_nascimento'])
+        if "Data_emissao_rg" in result:
+            result["Data_emissao_rg"] = formatar_data(result['Data_emissao_rg'])
+       
+
+        return {key: value for key, value in result.items() if value is not None}
+
 #Serializer do modelo ClientJob
 class ClientJobSerializer(serializers.ModelSerializer):
     class Meta:
@@ -43,12 +61,30 @@ class ClientJobSerializer(serializers.ModelSerializer):
     #Retorno apenas dados que tem valores
     def to_representation(self, instance):
         result = super().to_representation(instance)
+
+        if "data_admissao" in result:
+            result["data_admissao"] = formatar_data(result['data_admissao'])
+
         return {key: value for key, value in result.items() if value is not None}
 
 #Serializer do modelo FinanciamentoVeiculo
 class FinanciamentoVeiculoSerializer(serializers.ModelSerializer):
     class Meta:
         model = FinanciamentoVeiculo
+        fields = '__all__'
+    
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None}
+
+#Serializer do modelo FinanciamentoVeiculo
+class FinanciamentoImovelSerializer(serializers.ModelSerializer):
+    detalhes_produtos_ativos = serializers.JSONField(required=False)
+    valores_aproximados_despesas = serializers.JSONField(required=False)
+    
+    class Meta:
+        model = FinanciamentoImovel
         fields = '__all__'
     
     #Retorno apenas dados que tem valores
@@ -87,6 +123,19 @@ class ClienteCertidoesSerializer(serializers.ModelSerializer):
     #Retorno apenas dados que tem valores
     def to_representation(self, instance):
         result = super().to_representation(instance)
+
+        if "data_casamento" in result:
+            result["data_casamento"] = formatar_data(result['data_casamento'])
+        
+        if "data_inicial" in result:
+            result["data_inicial"] = formatar_data(result['data_inicial'])
+        
+        if "data_final" in result:
+            result["data_final"] = formatar_data(result['data_final'])
+        
+        if "data_obito" in result:
+            result["data_obito"] = formatar_data(result['data_obito'])
+
         return {key: value for key, value in result.items() if value is not None}
 
 #Serializer do modelo ClientEmpresarial
@@ -98,6 +147,10 @@ class ClientEmpresarialSerializer(serializers.ModelSerializer):
     #Retorno apenas dados que tem valores
     def to_representation(self, instance):
         result = super().to_representation(instance)
+
+        if "data_abertura" in result:
+            result["data_abertura"] = formatar_data(result['data_abertura'])
+        
         return {key: value for key, value in result.items() if value is not None}
 
 #Serializer do modelo Certidao
@@ -111,6 +164,7 @@ class CertidoesSerializer(serializers.ModelSerializer):
         result = super().to_representation(instance)
         return {key: value for key, value in result.items() if value is not None}
 
+#Serializer do modelo Documentos
 class DocumentoSerializer(serializers.ModelSerializer):
     arquivo = serializers.FileField(validators=[validate_file_type, validate_file_size])
     class Meta:
@@ -119,6 +173,7 @@ class DocumentoSerializer(serializers.ModelSerializer):
 
 class NovoPedidoSerializer(serializers.ModelSerializer):
     documentos = DocumentoSerializer(many=True, required=False)
+    cliente = serializers.PrimaryKeyRelatedField(queryset=Cliente.objects.all(), required=False)
 
     class Meta:
         model = Processos
@@ -127,8 +182,9 @@ class NovoPedidoSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         with transaction.atomic():
             documentos_data = validated_data.pop('documentos', [])
-
-            processo = Processos.objects.create(**validated_data)
+            cliente = validated_data.pop('cliente', None)  # Adicione esta linha
+            
+            processo = Processos.objects.create(cliente=cliente, **validated_data)
 
             for doc in documentos_data:
                 Documento.objects.create(cliente=processo, **doc)
@@ -148,33 +204,6 @@ class AfiliadoSerializerConsulta(serializers.ModelSerializer):
                    'telefone'
                 ]
     
-class NovoClienteSerializerConsulta(serializers.ModelSerializer):
-    documentos = DocumentoSerializerConsulta(many=True, source='documento_set', read_only=True)
-    afiliado = AfiliadoSerializerConsulta(read_only=True)
-    client_job = ClientJobSerializer(source='clientjob', read_only=True)  # Alterado aqui
-    financiamento_veiculo = FinanciamentoVeiculoSerializer(source='financiamentoveiculo', read_only=True)  # Alterado aqui
-    
-    class Meta:
-        model = Processos
-        fields = '__all__'
-    
-    #Retorno apenas dados que tem valores    
-    def to_representation(self, instance):    
-        representation = super().to_representation(instance)
-        
-        #Chamando a funcao para ajustar o formato da Data
-        if "data_pedido" in representation:
-            representation["data_pedido"] = formatar_data(representation['data_pedido'])
-        #Chamando a funcao para ajustar o formato da Data
-        if "data_nascimento" in representation:
-            representation["data_nascimento"] = formatar_data(representation['data_nascimento'])
-    
-        if "data_casamento" in representation:
-            representation["data_casamento"] = formatar_data(representation['data_casamento'])
-
-        
-        return {key: value for key, value in representation.items() if value not in [None, "", [], {}, "null"]}
-
 class ServicoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Servico
@@ -188,13 +217,19 @@ class TransacaoSerializer(serializers.ModelSerializer):
 
 class ClienteSerializerConsulta(serializers.ModelSerializer):
     documentos = DocumentoSerializerConsulta(many=True, source='documento_set', read_only=True)
+    clientes = ClienteSerializer(source='cliente',read_only=True)  # Alterado aqui
     afiliado = AfiliadoSerializerConsulta(read_only=True)
     funcionario = AfiliadoSerializerConsulta(read_only=True)
     servicos = ServicoSerializer(read_only=True)
     transacao = TransacaoSerializer(read_only=True)
     client_job = ClientJobSerializer(source='clientjob', read_only=True)  # Alterado aqui
     financiamento_veiculo = FinanciamentoVeiculoSerializer(source='financiamentoveiculo', read_only=True)  # Alterado aqui
-
+    cartorio = CartorioSerializer(read_only=True)       # Alterado aqui
+    cliente_terceiro = ClienteTerceiroSerializer(source='clienteterceiro', read_only=True)       # Alterado aqui
+    client_empresarial = ClientEmpresarialSerializer(source='clientempresarial', read_only=True)       # Alterado aqui
+    certidoes = CertidoesSerializer( read_only=True)
+    financiamentoimovel = FinanciamentoImovelSerializer(read_only=True)
+    
     class Meta:
         model = Processos
         fields = '__all__'
@@ -202,6 +237,19 @@ class ClienteSerializerConsulta(serializers.ModelSerializer):
     #Retorno apenas dados que tem valores
     def to_representation(self, instance):
         result = super().to_representation(instance)
+
+        #Chamando a funcao para ajustar o formato da Data
+        if "data_pedido" in result:
+            result["data_pedido"] = formatar_data(result['data_pedido'])
+        
+        if "data_nascimento" in result:
+            print("Data pedido antes:", result["data_nascimento"])
+            result["data_nascimento"] = formatar_data(result['data_nascimento'])
+            print("Data pedido depois:", result["data_nascimento"])
+        
+        if "data_casamento" in result:
+            result["data_casamento"] = formatar_data(result['data_casamento'])
+            print("Data pedido depois:", result["data_casamento"])
         return {key: value for key, value in result.items() if value is not None}
 
 class ClienteSerializerAlteracao(serializers.ModelSerializer):    

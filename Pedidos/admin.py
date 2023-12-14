@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Certidoes, Cartorio, ClienteTerceiro, Processos, Documento, ClientJob, FinanciamentoVeiculo, ClientEmpresarial
+from .models import Certidoes, Cartorio, ClienteTerceiro, Processos, Documento, ClientJob, FinanciamentoVeiculo, ClientEmpresarial,FinanciamentoImovel
 
 @admin.register(Processos)
 class NovoClienteModelAdmin(admin.ModelAdmin):
@@ -29,6 +29,11 @@ class NovoClienteModelCartorio(admin.ModelAdmin):
     
 @admin.register(ClienteTerceiro)
 class NovoClienteModelClienteTerceiro(admin.ModelAdmin):
+    def get_list_display(self, request):
+        return [field.name for field in self.model._meta.fields]
+
+@admin.register(FinanciamentoImovel)
+class NovoClienteModelFinanciamentoImovel(admin.ModelAdmin):
     def get_list_display(self, request):
         return [field.name for field in self.model._meta.fields]
 
