@@ -39,6 +39,9 @@ class Cliente(models.Model):
     complemento = models.CharField(max_length=300, null=True, blank=True)
     numero = models.IntegerField(null=True, blank=True)
 
+    nome_mae = models.CharField(max_length=100, null=True, blank=True)
+    nome_pai = models.CharField(max_length=100, null=True, blank=True)
+
     is_validated = models.BooleanField(default=False)
     validation_token = models.CharField(max_length=255, unique=True, null=True, blank=True)
     

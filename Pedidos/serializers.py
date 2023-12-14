@@ -81,7 +81,6 @@ class FinanciamentoVeiculoSerializer(serializers.ModelSerializer):
 #Serializer do modelo FinanciamentoVeiculo
 class FinanciamentoImovelSerializer(serializers.ModelSerializer):
     detalhes_produtos_ativos = serializers.JSONField(required=False)
-    detalhes_instituicao_financeira = serializers.JSONField(required=False)
     valores_aproximados_despesas = serializers.JSONField(required=False)
     
     class Meta:

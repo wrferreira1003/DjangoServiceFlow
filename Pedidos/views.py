@@ -74,7 +74,7 @@ def criar_transacao(cliente_data,processo_obj, servico_id):
         return Transacao.objects.create(**transacao_data)
     except Exception as e:
         logger.error(f"Erro ao criar transação: {e}")
-        print(f"Erro ao criar transação: {e}")
+        #print(f"Erro ao criar transação: {e}")
         return None
 
 #Funcao que cria os Dados de trabalho do cliente
@@ -223,7 +223,7 @@ def create_process(data, cliente_data):
 
 def process_documents(files, data):
     documentos_data = []
-    print(files)
+    #print(files)
     # Captura todos os documentos enviados
     for key, arquivo in files.items():
         if key.startswith('documentos'):
@@ -233,7 +233,7 @@ def process_documents(files, data):
                 'descricao': descricao,
                 'arquivo': arquivo
         })
-    print(documentos_data)        
+    #print(documentos_data)        
     # Remover campos de documentos do data original para evitar problemas com o serializador
     for key in list(data.keys()):
         if key.startswith('documentos'):
@@ -262,6 +262,7 @@ def atualizar_ou_criar(serializer, instance, data):
         if instance_serializer.is_valid():
             instance_serializer.save()
         else:
+            print(instance_serializer.errors)
             return Response(instance_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 #----------------------------------------------------------------------------------------------#     
 #Consultar os pedidos pelo id do cliente
@@ -423,8 +424,10 @@ def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar
     if isinstance(resposta, Response):
         return resposta
     # Atualize ou crie o FinanciamentoImovel
+    print(data)
     resposta = atualizar_ou_criar(FinanciamentoImovelSerializer, imoveis, data)
     if isinstance(resposta, Response):
+        print(resposta)
         return resposta
     
     
@@ -490,7 +493,7 @@ def criar_cliente_com_relacionados(request):
    
     if cliente_id is None:
         logger.error(f"Erro ao criar ou atualizar cliente: {str(e)}")
-        print(e)
+        #print(e)
         return Response({"error": "Erro ao criar ou atualizar cliente."}, status=status.HTTP_400_BAD_REQUEST)
     
     # Adicione o ID do cliente ao dicionário 'data'
@@ -526,7 +529,7 @@ def criar_cliente_com_relacionados(request):
             criar_cartorio(cartorio_data, processo_obj)
         except ValueError as e:
             logger.error(f"Erro na criação do cartorio: {str(e)}")
-            print(f"Erro na criação do cartorio: {str(e)}")
+            #(f"Erro na criação do cartorio: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     # Chamada para a funcao para criar os dados do cliente terceiro caso tenha essa informacao
@@ -540,7 +543,7 @@ def criar_cliente_com_relacionados(request):
             criar_cliente_terceiro(cliente_terceiro_data, processo_obj)
         except ValueError as e:
             logger.error(f"Erro na criação do cliente_terceiro: {str(e)}")
-            print(f"Erro na criação do cliente_terceiro: {str(e)}")
+            #print(f"Erro na criação do cliente_terceiro: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     
@@ -555,7 +558,7 @@ def criar_cliente_com_relacionados(request):
             criar_certidoes(certidoes_data, processo_obj)
         except ValueError as e:
             logger.error(f"Erro na criação do certidoes: {str(e)}")
-            print(f"Erro na criação do certidoes: {str(e)}")
+            #print(f"Erro na criação do certidoes: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     
@@ -693,7 +696,7 @@ def ClienteFinanciamentoImoveis(request):
     financiamento_imoveis = {} # Criando um dicionario vazio
     for field in imoveis_fields: #Percorrendo os campos do banco de dados
         financiamento_imoveis[field] = financiamento_imoveis_data.get(field, None) 
-    print(financiamento_imoveis)               
+    #print(financiamento_imoveis)               
     try:        
         criar_financiamento_imoveis(financiamento_imoveis, processo_obj) # Chamando a funcao que cria o client_job
     except ValueError as e:

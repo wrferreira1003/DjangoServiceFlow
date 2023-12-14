@@ -223,9 +223,7 @@ class FinanciamentoImovel(models.Model):
     possui_produtos_ativos = models.CharField(max_length=10, null=True, blank=True) # Armazena se o cliente possui produtos ativos
     detalhes_produtos_ativos = models.JSONField(null=True, blank=True) # Armazenaar uma lista de produtos ativos em formato json
     
-    #- INSTITUIÇÃO FINANCEIRA / VALOR A PAGAR / QTDE. DE PRESTAÇÕES A VENCER / DATA DA ÚLTIMA PRESTAÇÃO PAGA
-    detalhes_instituicao_financeira = models.JSONField(null=True, blank=True)
-    
+ 
     #ALIMENTAÇÃO, COMBUSTÍVEL/TRANSPORTE, CONTAS DE TELEFONE, CONDOMÍNIO, EDUCAÇÃO, ALUGUEL, PENSÃO ALIMENTICIA,DESPESAS COM SAÚDE, CONTA DE LUZ/ÁGUA
     valores_aproximados_despesas = models.JSONField(null=True, blank=True)
 
