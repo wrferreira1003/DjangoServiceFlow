@@ -3,7 +3,7 @@ from .models import AfiliadosModel
 
 @admin.register(AfiliadosModel)
 class AfiliadosModelAdmin(admin.ModelAdmin):
-    list_display= ['get_cpf_cnpj','id','nome', 'razao_social','email', 
+    list_display= ['get_cpf_cnpj','id','nome','user_type', 'afiliado_relacionado','email', 
                    'telefone', 'endereco' ,'bairro', 'cidade',
                    'estado', 'cep', 'afiliado_relacionado']
     

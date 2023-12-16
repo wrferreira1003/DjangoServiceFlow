@@ -51,10 +51,11 @@ def send_validation_email(email, token):
     )
 
 class ClienteSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
     class Meta:
-        model = Cliente
+        model = AfiliadosModel
         fields = [ 'id',
-                    'afiliado', 
+                    'afiliado_relacionado', 
                     'nome', 
                     'cpf',    
                     'email', 
@@ -79,31 +80,19 @@ class ClienteSerializer(serializers.ModelSerializer):
                     'numero',
                     'nome_mae',
                     'nome_pai',
+                    'user_type',
                 ]
-        
-    #Aplicando as validacoes nos campos por seguranca
-    nome = serializers.CharField(validators=[validate_nome])
-    email = serializers.CharField(validators=[validate_email])
-    telefone = serializers.CharField(validators=[validate_telefone])
-    cpf = serializers.CharField(validators=[validate_cpf])
- 
-    #Removendo o campo password dos dados retornados
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data.pop('password', None)  # Remover o campo 'password' dos dados serializados
+#Validando os campos       
+    def validate(self, data):
+        # Verifica se o password é vazio ou None
+        password = data.get('password')
+        if not password:
+            # Define o password como o CPF se estiver vazio
+            password = data.get('cpf')
+            data['password'] = password
         return data
-    
-    #Validação customizada no serializer para verificar se o e-mail já existe no banco de dados. 
-    # def validate_email(self, value):
-    #    if Cliente.objects.filter(email=value).exists():
-    #        raise serializers.ValidationError('E-mail já está em uso')
-    #    return value
-    
-    def validate_cpf(self, value):
-        if Cliente.objects.filter(cpf=value).exists():
-            raise serializers.ValidationError('CPF já está em uso')
-        return value
-
+        
+#Funcao que cria o cliente com os dados do afiliado
     def create(self, validated_data):
         validation_token = generate_validation_token()
         validated_data['validation_token'] = validation_token
@@ -122,6 +111,21 @@ class ClienteSerializer(serializers.ModelSerializer):
         send_validation_email(instance.email, validation_token)
         
         return instance
+    
+    def update(self, instance, validated_data):
+    # Atualiza os campos do modelo com os novos dados
+        for field, value in validated_data.items():
+            if field == 'password' and value is None:
+                continue
+            setattr(instance, field, value)
+        instance.save()
+        return instance
+    
+#Removendo o campo password dos dados retornados
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data.pop('password', None)  # Remover o campo 'password' dos dados serializados
+        return data
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -237,9 +241,9 @@ class AtualizaClienteSerializer(serializers.ModelSerializer):
     
 class ClienteExistenteSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Cliente
+        model = AfiliadosModel
         fields = [ 'id',
-                    'afiliado', 
+                    'afiliado_relacionado',
                     'nome', 
                     'cpf',    
                     'email', 

@@ -6,9 +6,17 @@ class Transacao(models.Model):
     from Afiliados.models import AfiliadosModel
     from Servicos.models import Servico
     from Pedidos.models import Processos
+    
+    cliente = models.ForeignKey(
+        'Afiliados.AfiliadosModel', 
+        on_delete=models.CASCADE, 
+        related_name='transacoes_cliente', 
+        null=True, 
+        blank=True,
+        limit_choices_to={'user_type': 'CLIENTE'},
+    )
 
-    cliente = models.ForeignKey('Cliente.Cliente', on_delete=models.CASCADE, related_name="transacoes")
-    afiliado = models.ForeignKey('Afiliados.AfiliadosModel', on_delete=models.SET_NULL, null=True, blank=True, related_name="transacoes") 
+    afiliado = models.ForeignKey('Afiliados.AfiliadosModel', on_delete=models.CASCADE, null=True, blank=True, related_name="transacoes_afiliado", limit_choices_to={'user_type': 'AFILIADO'}) 
     servico = models.ForeignKey('Servicos.Servico', on_delete=models.SET_NULL, null=True)
     pedido = models.OneToOneField('Pedidos.Processos', on_delete=models.CASCADE)
     preco = models.DecimalField(max_digits=10, decimal_places=2)
