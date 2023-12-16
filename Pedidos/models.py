@@ -18,10 +18,15 @@ STATUS_CHOICES = [
 class Processos(models.Model):
   from Afiliados.models import AfiliadosModel
   from Servicos.models import Servico
-  from Cliente.models import Cliente
 
-  #Dados do cliente
-  cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='processos', null=True, blank=True)
+  cliente = models.ForeignKey(
+        AfiliadosModel, 
+        on_delete=models.CASCADE, 
+        related_name='processos', 
+        null=True, 
+        blank=True,
+        limit_choices_to={'user_type': 'CLIENTE'},
+    )
   #idCliente = models.CharField(max_length=10, blank=True, null=True)
   fisico_juridico = models.CharField(max_length=50, blank=True, null=True)
   status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pendente')

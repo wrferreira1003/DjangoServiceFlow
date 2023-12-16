@@ -1,9 +1,9 @@
 # Importando os pacotes necessarios
 from rest_framework import status, generics
 from datetime import datetime
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from .serializers import ClienteCertidoesSerializer, ClienteTerceiroSerializer, CartorioSerializer, ClientJobSerializer, FinanciamentoVeiculoSerializer,ClienteSerializerAlteracaoAdmAfiliado, NovoPedidoSerializer,DocumentoSerializer, ClienteSerializerConsulta, ClienteSerializerAlteracao,AtualizaClienteSerializer,ClientEmpresarialSerializer, FinanciamentoImovelSerializer
+from .serializers import ClienteCertidoesSerializer, ClienteTerceiroSerializer, CartorioSerializer, ClientJobSerializer, FinanciamentoVeiculoSerializer,ClienteSerializerAlteracaoAdmAfiliado, NovoPedidoSerializer,DocumentoSerializer, ClienteSerializerConsulta, ClienteSerializerAlteracao,AtualizaDocumentoSerializer,ClientEmpresarialSerializer, FinanciamentoImovelSerializer
 
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView
 from rest_framework.views import APIView
@@ -15,6 +15,7 @@ from Cliente.serializers import ClienteSerializer, ClienteExistenteSerializer
 from Servicos.models import Servico
 from financeiro.models import Transacao
 from Afiliados.models import AfiliadosModel
+from Afiliados.serializers import AfiliadosModelSerializer
 from rest_framework.pagination import PageNumberPagination
 import logging
 from rest_framework.permissions import IsAuthenticated
@@ -32,32 +33,41 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 #Funcao que cria ou atualiza um novo cliente na hora que uma nova solicitacao e feita.
 def criar_ou_atualizar_cliente(data):
-    #Verificar se o cliente existe
+    # Verificar se o cliente existe
     cliente_existente = None
     if 'cpf' in data:
-        cliente_existente = Cliente.objects.filter(cpf=data['cpf']).first()
-
-    #Caso o cliente existe vamos atualizar os dados dele
+        cliente_existente = AfiliadosModel.objects.filter(cpf=data['cpf'], user_type='CLIENTE').first()
+    #print(cliente_existente)
+    # Caso o cliente exista vamos atualizar os dados dele
     if cliente_existente:
         cliente_serializer = ClienteExistenteSerializer(instance=cliente_existente, data=data, partial=True)
+     
     else:
         cliente_serializer = ClienteSerializer(data=data)
-    
-    if cliente_serializer.is_valid(raise_exception=True):
-        cliente_obj = cliente_serializer.save()
-    
-        return cliente_obj.id, cliente_obj, cliente_existente is None
-
-    return None, False
+     
+    if cliente_serializer.is_valid():
+        try:
+            cliente_obj = cliente_serializer.save()
+            return cliente_obj.id, cliente_obj, cliente_existente is None
+        except Exception as e:
+            logger.error(f"Erro ao salvar o cliente: {e}")
+            return None, False, False
+    else:
+        logger.error(f"Erro na validação dos dados do cliente: {cliente_serializer.errors}")
+        return None, False, False
 
 #Funcao que cria uma transacao no banco de dados
 def criar_transacao(cliente_data,processo_obj, servico_id):
     logger.info("Iniciando a criação de uma transacao...")
     try:
-        cliente_instance = cliente_data 
-        afiliado_instance = cliente_data.afiliado if cliente_data.afiliado else None
+
+        cliente_instance = AfiliadosModel.objects.get(pk=cliente_data.id)
         
+        afiliado = cliente_instance.afiliado_relacionado if cliente_instance.afiliado_relacionado else None
+        afiliado_instance = AfiliadosModel.objects.get(pk=afiliado.id)
+           
         pedido_instance = processo_obj
+        
         servico_instance = Servico.objects.get(pk=servico_id)
 
         transacao_data = {
@@ -65,7 +75,7 @@ def criar_transacao(cliente_data,processo_obj, servico_id):
             "afiliado": afiliado_instance,
             "servico": servico_instance,
             "pedido": pedido_instance,
-            "preco": servico_instance.preco,  # Supondo que o modelo Servico tenha um campo chamado "preco"
+            "preco": servico_instance.preco,
             "FormaDePagamento": processo_obj.FormaDePagamento,
             "statusPagamento": 'Link de pagamento não disponivel'
         }
@@ -74,7 +84,7 @@ def criar_transacao(cliente_data,processo_obj, servico_id):
         return Transacao.objects.create(**transacao_data)
     except Exception as e:
         logger.error(f"Erro ao criar transação: {e}")
-        #print(f"Erro ao criar transação: {e}")
+        #print(e)
         return None
 
 #Funcao que cria os Dados de trabalho do cliente
@@ -210,17 +220,6 @@ def validate_documents(data):
         logger.error(f"Erro na validação dos documentos: {documentos_serializer.errors}")
         return False
 
-def create_process(data, cliente_data):
-    processo_data = data.get('processo', {})
-    processo_data['cliente'] = cliente_data['id']
-    processo_serializer = ProcessoSerializer(data=processo_data)
-    if processo_serializer.is_valid():
-        processo_obj = processo_serializer.save()
-        return processo_obj
-    else:
-        logger.error(f"Erro na validação do processo: {processo_serializer.errors}")
-        return None
-
 def process_documents(files, data):
     documentos_data = []
     #print(files)
@@ -312,132 +311,11 @@ def formatar_data(data_string, formato_origem, formato_destino='%Y-%m-%d'):
     except ValueError:
         return None
 
-#Atualizar os dados do cliente 
-@api_view(['PATCH'])
-def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar o registro 
-    try:
-        processo = Processos.objects.get(pk=id)  # Obtenha o cliente pelo ID
-        cliente = Cliente.objects.get(pk=processo.cliente.id)  # Obtenha o cliente pelo ID
-    except Processos.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    
-    #obter o ClientJob e o FinanciamentoVeiculo associados, ou defina-os como None se eles não existirem
-    client_job = ClientJob.objects.filter(processo=processo).first()
-    financiamento_veiculo = FinanciamentoVeiculo.objects.filter(processo=processo).first()
-    client_empresarial = ClientEmpresarial.objects.filter(processo=processo).first()
-    cliente_terceiro = ClienteTerceiro.objects.filter(processo=processo).first()
-    cartorio = Cartorio.objects.filter(processo=processo).first()
-    certidoes = Certidoes.objects.filter(processo=processo).first()
-    imoveis = FinanciamentoImovel.objects.filter(processo=processo).first()
-   
-    
-    data = request.data.copy()
-
-    #Ajustes das datas antes de salvar no banco de dados
-    data_nascimento = formatar_data_coluna('data_nascimento', data)
-    if isinstance(data_nascimento, Response):
-        return data_nascimento
-    
-    data_casamento = formatar_data_coluna('data_casamento', data)
-    if isinstance(data_casamento, Response):
-        return data_casamento
-    
-    data_inicial = formatar_data_coluna('data_inicial', data)
-    if isinstance(data_inicial, Response):
-        return data_inicial
-    
-    data_final = formatar_data_coluna('data_final', data)
-    if isinstance(data_final, Response):
-        return data_final
-
-    data_obito = formatar_data_coluna('data_obito', data)
-    if isinstance(data_obito, Response):
-        return data_obito
-
-    data_admissao = formatar_data_coluna('data_admissao', data)
-    if isinstance(data_admissao, Response):
-        return data_admissao 
-
-    data_abertura = formatar_data_coluna('data_abertura', data)
-    if isinstance(data_abertura, Response):
-        return data_abertura          
-    
-    files = request.FILES
-
-    documentos_data = []
-
-    # Captura todos os documentos enviados
-    for key, arquivo in files.items():
-        if key.startswith('documentos'):
-            index = key.split('[')[1].split(']')[0]
-            descricao = data.get(f'documentos[{index}].descricao')
-            documentos_data.append({
-                'descricao': descricao,
-                'arquivo': arquivo
-            })
-
-    # Atualizando os dados dos Clientes
-    cliente_serializer = ClienteSerializer(cliente, data=data, partial=True)  # Crie um novo serializer para o cliente
-    if cliente_serializer.is_valid():
-        cliente_serializer.save()  # Salve os dados atualizados
-    else:
-        return Response(cliente_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    # Remover campos de documentos do data original para evitar problemas com o serializador
-    for key in list(data.keys()):
-        if key.startswith('documentos'):
-            del data[key]
-
-    data['documentos'] = documentos_data
-
-    
-    cliente_serializer = AtualizaClienteSerializer(processo, data=data, partial=True)  
-    if cliente_serializer.is_valid():
-        cliente_serializer.validated_data['documentos'] = documentos_data
-        cliente_serializer.save()
-    else:
-        return Response(cliente_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-
-    # Atualize ou crie o ClientJob
-    resposta = atualizar_ou_criar(ClientJobSerializer, client_job, data)
-    if isinstance(resposta, Response):
-        return resposta
-    # Atualize ou crie o FinanciamentoVeiculo
-    resposta = atualizar_ou_criar(FinanciamentoVeiculoSerializer, financiamento_veiculo, data)
-    if isinstance(resposta, Response):
-        return resposta
-    # Atualize ou crie o ClientEmpresarial
-    resposta = atualizar_ou_criar(ClienteCertidoesSerializer,   certidoes , data)
-    if isinstance(resposta, Response):
-        return resposta
-    # Atualize ou crie o ClientEmpresarial
-    resposta = atualizar_ou_criar(ClienteTerceiroSerializer,   cliente_terceiro , data)
-    if isinstance(resposta, Response):
-        return resposta
-    # Atualize ou crie o ClientEmpresarial
-    resposta = atualizar_ou_criar(CartorioSerializer,   cartorio , data)
-    if isinstance(resposta, Response):
-        return resposta
-    # Atualize ou crie o ClientEmpresarial
-    resposta = atualizar_ou_criar(ClientEmpresarialSerializer,   client_empresarial , data)
-    if isinstance(resposta, Response):
-        return resposta
-    # Atualize ou crie o FinanciamentoImovel
-    print(data)
-    resposta = atualizar_ou_criar(FinanciamentoImovelSerializer, imoveis, data)
-    if isinstance(resposta, Response):
-        print(resposta)
-        return resposta
-    
-    
-    return Response(cliente_serializer.data, status=status.HTTP_200_OK)
-
 #Consultar os pedidos pelo id do afiliado
 class PedidosPorAfiliadoListView(generics.ListAPIView):
     serializer_class = ClienteSerializerConsulta
     pagination_class = StandardResultsSetPagination
-    #permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """
@@ -449,7 +327,8 @@ class PedidosPorAfiliadoListView(generics.ListAPIView):
 
 class PedidosPorFuncionarioListView(generics.ListAPIView):
     serializer_class = ClienteSerializerConsulta  # ou o serializer apropriado
-
+    
+    
     def get_queryset(self):
         """
         Este método irá retornar uma lista de pedidos para o funcionário especificado.
@@ -457,6 +336,7 @@ class PedidosPorFuncionarioListView(generics.ListAPIView):
         """
         funcionario_id = self.kwargs['funcionario_id']
         return Processos.objects.filter(funcionario__id=funcionario_id).order_by('-data_pedido')  
+
 
 class PedidosPorClienteListView(generics.ListAPIView):
     serializer_class = ClienteSerializerConsulta
@@ -466,8 +346,8 @@ class PedidosPorClienteListView(generics.ListAPIView):
         Este método irá retornar uma lista de pedidos para o afiliado especificado.
         O afiliado é determinado pelo `id` passado na URL.
         """
-        cliente_id = self.kwargs['idCliente']
-        return Processos.objects.filter(idCliente=cliente_id).order_by('-data_pedido')
+        cliente_id = self.kwargs['cliente_id']
+        return Processos.objects.filter(cliente_id=cliente_id).order_by('-data_pedido')
     
 @api_view(['DELETE'])
 def delete_documento_api(request, documento_id):
@@ -487,18 +367,22 @@ def delete_documento_api(request, documento_id):
 def criar_cliente_com_relacionados(request):
     logger.info("Iniciando a criação do cliente e relacionados...")
     data = request.data.copy()  # Mudança aqui
-
+    #print(data)
     # Chamada para a função que cria ou atualiza o cliente
     cliente_id, cliente_data, is_new = criar_ou_atualizar_cliente(data)
-   
-    if cliente_id is None:
+    
+    try:
+        # ... seu código para criar ou atualizar cliente aqui ...
+        if cliente_id is None:
+            logger.error("Erro ao criar ou atualizar cliente: cliente_id é None")
+            return Response({"error": "Erro ao criar ou atualizar cliente."}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
         logger.error(f"Erro ao criar ou atualizar cliente: {str(e)}")
-        #print(e)
         return Response({"error": "Erro ao criar ou atualizar cliente."}, status=status.HTTP_400_BAD_REQUEST)
     
     # Adicione o ID do cliente ao dicionário 'data'
     data['cliente'] = cliente_id 
- 
+
     # Incluindo os documentos processados na data
     documentos_data = process_documents(request.FILES, data)
     data['documentos'] = documentos_data 
@@ -506,14 +390,13 @@ def criar_cliente_com_relacionados(request):
     # Vamos testar a validação dos documentos aqui
     doc_serializer = DocumentoSerializer(data=documentos_data, many=True)
     doc_serializer.is_valid(raise_exception=True)
-      
-    
+
     #Validacao e criacao do processo.
     #raise_exception=True: Isso faz com que o serializador levante uma exceção se a validação falhar
     processo_serializer = NovoPedidoSerializer(data=data) # Aqui você passa o data com os documentos
     processo_serializer.is_valid(raise_exception=True) # Aqui você testa a validação do processo e dos documentos
     
-
+    
     processo_serializer.validated_data['documentos'] = documentos_data
     processo_obj = processo_serializer.save() # Aqui você obtém o objeto Processos criado
 
@@ -531,7 +414,7 @@ def criar_cliente_com_relacionados(request):
             logger.error(f"Erro na criação do cartorio: {str(e)}")
             #(f"Erro na criação do cartorio: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+ 
     # Chamada para a funcao para criar os dados do cliente terceiro caso tenha essa informacao
     cliente_terceiro_data_fields = ClienteTerceiro.get_field_names()
     cliente_terceiro_data = {}
@@ -561,7 +444,7 @@ def criar_cliente_com_relacionados(request):
             #print(f"Erro na criação do certidoes: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
-    
+   
     #Aqui criamos a instancia de transacao
     transacao_obj = criar_transacao(cliente_data, processo_obj, data.get('servico'))
     if not transacao_obj:
@@ -711,3 +594,125 @@ def ClienteFinanciamentoImoveis(request):
         return Response({"error": "Serviço não encontrado."}, status=status.HTTP_400_BAD_REQUEST)
             
     return Response(processo_serializer.data, status=status.HTTP_201_CREATED)
+
+#Atualizar os dados do cliente 
+@api_view(['PATCH'])
+def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar o registro 
+    try:
+        processo = Processos.objects.get(pk=id)  # Obtenha o cliente pelo ID
+        cliente = AfiliadosModel.objects.get(pk=processo.cliente.id, user_type='CLIENTE')  # Obtenha o cliente pelo ID
+    except Processos.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    #obter o ClientJob e o FinanciamentoVeiculo associados, ou defina-os como None se eles não existirem
+    client_job = ClientJob.objects.filter(processo=processo).first()
+    financiamento_veiculo = FinanciamentoVeiculo.objects.filter(processo=processo).first()
+    client_empresarial = ClientEmpresarial.objects.filter(processo=processo).first()
+    cliente_terceiro = ClienteTerceiro.objects.filter(processo=processo).first()
+    cartorio = Cartorio.objects.filter(processo=processo).first()
+    certidoes = Certidoes.objects.filter(processo=processo).first()
+    imoveis = FinanciamentoImovel.objects.filter(processo=processo).first()
+   
+    
+    data = request.data.copy()
+
+   
+    #Ajustes das datas antes de salvar no banco de dados
+    #data_nascimento = formatar_data_coluna('data_nascimento', data)
+    #if isinstance(data_nascimento, Response):
+    #    return data_nascimento
+    
+    data_casamento = formatar_data_coluna('data_casamento', data)
+    if isinstance(data_casamento, Response):
+        return data_casamento
+    
+    data_inicial = formatar_data_coluna('data_inicial', data)
+    if isinstance(data_inicial, Response):
+        return data_inicial
+    
+    data_final = formatar_data_coluna('data_final', data)
+    if isinstance(data_final, Response):
+        return data_final
+
+    data_obito = formatar_data_coluna('data_obito', data)
+    if isinstance(data_obito, Response):
+        return data_obito
+
+    #data_admissao = formatar_data_coluna('data_admissao', data)
+    #if isinstance(data_admissao, Response):
+    #    return data_admissao 
+
+    data_abertura = formatar_data_coluna('data_abertura', data)
+    if isinstance(data_abertura, Response):
+        return data_abertura          
+    
+    files = request.FILES
+
+    documentos_data = []
+
+    # Captura todos os documentos enviados
+    for key, arquivo in files.items():
+        if key.startswith('documentos'):
+            index = key.split('[')[1].split(']')[0]
+            descricao = data.get(f'documentos[{index}].descricao')
+            documentos_data.append({
+                'descricao': descricao,
+                'arquivo': arquivo
+            })
+
+    # Atualizando os dados dos Clientes
+    cliente_serializer = ClienteSerializer(cliente, data=data, partial=True)  # Crie um novo serializer para o cliente
+    if cliente_serializer.is_valid():
+        cliente_serializer.save()  # Salve os dados atualizados
+    else:
+        return Response(cliente_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # Remover campos de documentos do data original para evitar problemas com o serializador
+    for key in list(data.keys()):
+        if key.startswith('documentos'):
+            del data[key]
+
+    data['documentos'] = documentos_data
+
+    
+    documents_serializer = AtualizaDocumentoSerializer(processo, data=data, partial=True)  
+    if documents_serializer.is_valid():
+        documents_serializer.validated_data['documentos'] = documentos_data
+        documents_serializer.save()
+    else:
+        return Response(documents_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+    # Atualize ou crie o ClientJob
+    resposta = atualizar_ou_criar(ClientJobSerializer, client_job, data)
+    if isinstance(resposta, Response):
+        return resposta
+    # Atualize ou crie o FinanciamentoVeiculo
+    resposta = atualizar_ou_criar(FinanciamentoVeiculoSerializer, financiamento_veiculo, data)
+    if isinstance(resposta, Response):
+        return resposta
+    # Atualize ou crie o ClientEmpresarial
+    resposta = atualizar_ou_criar(ClienteCertidoesSerializer,   certidoes , data)
+    if isinstance(resposta, Response):
+        return resposta
+    # Atualize ou crie o ClientEmpresarial
+    resposta = atualizar_ou_criar(ClienteTerceiroSerializer,   cliente_terceiro , data)
+    if isinstance(resposta, Response):
+        return resposta
+    # Atualize ou crie o ClientEmpresarial
+    resposta = atualizar_ou_criar(CartorioSerializer,   cartorio , data)
+    if isinstance(resposta, Response):
+        return resposta
+    # Atualize ou crie o ClientEmpresarial
+    resposta = atualizar_ou_criar(ClientEmpresarialSerializer,   client_empresarial , data)
+    if isinstance(resposta, Response):
+        return resposta
+    # Atualize ou crie o FinanciamentoImovel
+    #print(data)
+    resposta = atualizar_ou_criar(FinanciamentoImovelSerializer, imoveis, data)
+    if isinstance(resposta, Response):
+        #print(resposta)
+        return resposta
+    
+    
+    return Response(cliente_serializer.data, status=status.HTTP_200_OK)

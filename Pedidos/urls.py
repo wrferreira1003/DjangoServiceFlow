@@ -24,7 +24,7 @@ urlpatterns = [
     
     path('pedidos_por_funcionario/<int:funcionario_id>/', PedidosPorFuncionarioListView.as_view(), name='pedidos-por-funcionario'),
     path('pedidos_por_afiliado/<int:afiliado_id>/', PedidosPorAfiliadoListView.as_view(), name='pedidos_por_afiliado'),
-    path('pedidos_por_cliente/<int:idCliente>/', PedidosPorClienteListView.as_view(), name='pedidos_por_cliente'),
+    path('pedidos_por_cliente/<int:cliente_id>/', PedidosPorClienteListView.as_view(), name='pedidos_por_cliente'),
     
     path('documento/delete/<int:documento_id>/', delete_documento_api, name='delete_documento_api'),
 ]

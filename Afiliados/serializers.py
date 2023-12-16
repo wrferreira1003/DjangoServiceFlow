@@ -23,8 +23,26 @@ class AfiliadosModelSerializer(serializers.ModelSerializer):
                 'last_login',
                 'afiliado_relacionado',
                 'cpf',
+                'telefone2',
+                'RegistroGeral',
+                'Data_emissao_rg',
+                'orgao_emissor_rg',
+                'estado_civil',
+                'profissao',
+                'data_nascimento',
+                'genero',
+                'naturalidade',
+                'cnh',
+                'nome_mae',
+                'nome_pai',
+                'logradouro',
+                'complemento',
+                'numero',
+                'password',
+                'is_validated',
+                'validation_token',
                 ]  # Lista todos os campos, exceto a senha
-
+    #Metodo de criação do afiliado/cliente
     def create(self, validated_data):
         # Se a password não for fornecida, definir password padrão
         if 'password' not in validated_data or validated_data['password'] in [None, '']:
@@ -39,6 +57,20 @@ class AfiliadosModelSerializer(serializers.ModelSerializer):
         afiliado.save()
         return afiliado
 
+    #Metodo de atualização do afiliado/cliente
+    def update(self, instance, validated_data):
+        # Verifique se a senha está sendo atualizada
+        if 'password' in validated_data:
+            password = validated_data.pop('password')
+            instance.set_password(password)
+
+        # Atualize os outros campos normalmente
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
+    
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
@@ -76,3 +108,4 @@ class FuncionarioSerializerFuncionarios(serializers.ModelSerializer):
                   'foto',
                   'last_login',
                   ]
+

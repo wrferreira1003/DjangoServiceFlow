@@ -18,7 +18,7 @@ class Servico(models.Model):
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, related_name="servicos")
     
     def __str__(self):
-        return self.nome_servico
+        return str(self.id)
 
 
 
