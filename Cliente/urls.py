@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import TodosClientesViewSet,validate_account,verifica_cpf,verifica_email, LoginUserView, AtualizaClienteViewSet, ListagemClienteCpf
+from .views import verifica_cpf_email,TodosClientesViewSet,validate_account,verifica_cpf,verifica_email, AtualizaClienteViewSet, ListagemClienteCpf
 from django.urls import path
 
 from rest_framework_simplejwt.views import (
@@ -19,10 +19,7 @@ urlpatterns = [
   path('validate/', validate_account, name='validate'),
   path('cpf/<str:cpf>/', verifica_cpf),
   path('email/<str:email>/', verifica_email),
-  path('loginuser/', LoginUserView.as_view(), name='loginuser'),
   path('listcpf/<str:cpf>/', ListagemClienteCpf),
-  path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+  path('cpf_email/<str:cpf>/<str:email>/', verifica_cpf_email),
 
-  path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-  path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ] +router.urls
