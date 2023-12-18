@@ -11,11 +11,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, ClientEmpresarial, ClienteTerceiro, Cartorio, FinanciamentoImovel
 from Cliente.models import Cliente
-from Cliente.serializers import ClienteSerializer, ClienteExistenteSerializer
+from Cliente.serializers import ClienteSerializer, ClienteExistenteSerializer, UserSerializer
 from Servicos.models import Servico
 from financeiro.models import Transacao
 from Afiliados.models import AfiliadosModel
-from Afiliados.serializers import AfiliadosModelSerializer
 from rest_framework.pagination import PageNumberPagination
 import logging
 from rest_framework.permissions import IsAuthenticated
@@ -37,7 +36,7 @@ def criar_ou_atualizar_cliente(data):
     cliente_existente = None
     if 'cpf' in data:
         cliente_existente = AfiliadosModel.objects.filter(cpf=data['cpf'], user_type='CLIENTE').first()
-    #print(cliente_existente)
+    print(cliente_existente)
     # Caso o cliente exista vamos atualizar os dados dele
     if cliente_existente:
         cliente_serializer = ClienteExistenteSerializer(instance=cliente_existente, data=data, partial=True)
@@ -266,7 +265,8 @@ def atualizar_ou_criar(serializer, instance, data):
 #----------------------------------------------------------------------------------------------#     
 #Consultar os pedidos pelo id do cliente
 class NovoClienteDetailView(APIView):
-
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request, id, format=None):
         clientes = Processos.objects.filter(idCliente=id)
         if clientes.exists():
@@ -278,30 +278,35 @@ class NovoClienteDetailView(APIView):
 #Consultar todos os pedidos, pelo painel do administrado.        
 class TodosClientesViewSemFiltro(ListCreateAPIView):
     pagination_class = StandardResultsSetPagination
+    permission_classes = [IsAuthenticated]
     queryset = Processos.objects.all().order_by('-data_pedido')
     serializer_class = ClienteSerializerConsulta
 
 
 class TodosClientesView(ListCreateAPIView):
     queryset = Processos.objects.all().order_by('-data_pedido')
+    permission_classes = [IsAuthenticated]
     serializer_class = ClienteSerializerConsulta
 
 #Excluir processos do banco de dados
 class ClienteDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Processos.objects.all()
     serializer_class = ClienteSerializerConsulta
+    permission_classes = [IsAuthenticated]
     lookup_field = 'id'
 
 #Alteracao de status no banco de dados do campo AfiliadoCliente
 class ClienteDetailViewAlteracao(UpdateAPIView):
     queryset = Processos.objects.all()
     serializer_class = ClienteSerializerAlteracao
+    permission_classes = [IsAuthenticated]
     lookup_field = 'id'
 
 #Alteracao de status no banco de dados do campo AdmAfiliado
 class ClienteDetailViewAlteracaoStatusAdmAfiliado(UpdateAPIView):
     queryset = Processos.objects.all()
     serializer_class = ClienteSerializerAlteracaoAdmAfiliado
+    permission_classes = [IsAuthenticated]
     lookup_field = 'id'
 
 #Funcao para auxiliar na formatacao das datas antes de salvar
@@ -326,6 +331,7 @@ class PedidosPorAfiliadoListView(generics.ListAPIView):
         return Processos.objects.filter(afiliado__id=afiliado_id).order_by('-data_pedido')
 
 class PedidosPorFuncionarioListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = ClienteSerializerConsulta  # ou o serializer apropriado
     
     
@@ -339,6 +345,7 @@ class PedidosPorFuncionarioListView(generics.ListAPIView):
 
 
 class PedidosPorClienteListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = ClienteSerializerConsulta
 
     def get_queryset(self):
@@ -351,6 +358,7 @@ class PedidosPorClienteListView(generics.ListAPIView):
     
 @api_view(['DELETE'])
 def delete_documento_api(request, documento_id):
+    permission_classes = [IsAuthenticated]
     try:
         documento = Documento.objects.get(id=documento_id)
     except Documento.DoesNotExist:
@@ -454,10 +462,10 @@ def criar_cliente_com_relacionados(request):
             
     return Response(processo_serializer.data, status=status.HTTP_201_CREATED)
 
-
 #Criar um novo pedido com cliente e documentos dos processos cartorarios
 @transaction.atomic # Isso garante que todas as operações de banco de dados sejam executadas ou nenhuma delas seja executada
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def ClienteFinanciamentoVeiculo(request):
     logger.info("Iniciando a criação do cliente e relacionados...")
     data = request.data.copy()  # Mudança aqui
@@ -465,7 +473,7 @@ def ClienteFinanciamentoVeiculo(request):
     # Chamada para a função que cria ou atualiza o cliente
     cliente_id, cliente_data, is_new = criar_ou_atualizar_cliente(data)
     if cliente_id is None:
-        logger.error(f"Erro ao criar ou atualizar cliente: {str(e)}")
+        logger.error(f"Erro ao criar ou atualizar cliente")
         #print(e)
         return Response({"error": "Erro ao criar ou atualizar cliente."}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -536,6 +544,7 @@ def ClienteFinanciamentoVeiculo(request):
 
 @transaction.atomic # Isso garante que todas as operações de banco de dados sejam executadas ou nenhuma delas seja executada
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def ClienteFinanciamentoImoveis(request):
     logger.info("Iniciando a criação do cliente e relacionados...")
     data = request.data.copy()  # Mudança aqui
@@ -543,7 +552,7 @@ def ClienteFinanciamentoImoveis(request):
     # Chamada para a função que cria ou atualiza o cliente
     cliente_id, cliente_data, is_new = criar_ou_atualizar_cliente(data)
     if cliente_id is None:
-        logger.error(f"Erro ao criar ou atualizar cliente: {str(e)}")
+        logger.error(f"Erro ao criar ou atualizar cliente")
         #print(e)
         return Response({"error": "Erro ao criar ou atualizar cliente."}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -597,6 +606,7 @@ def ClienteFinanciamentoImoveis(request):
 
 #Atualizar os dados do cliente 
 @api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
 def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar o registro 
     try:
         processo = Processos.objects.get(pk=id)  # Obtenha o cliente pelo ID
@@ -716,3 +726,54 @@ def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar
     
     
     return Response(cliente_serializer.data, status=status.HTTP_200_OK)
+
+#Recebe os processos onde o cliente nao e cadastrado como usuario no sistema de clientes
+@transaction.atomic
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def ClienteSemCadastroView(request):
+    try:
+        logger.info("Iniciando a criação do cliente")
+        data = request.data.copy()  # Mudança aqui
+
+        # Chamada para a função que cria ou atualiza o cliente
+        cliente_id, cliente_data, is_new = criar_ou_atualizar_cliente(data)
+        if cliente_id is None:
+            logger.error(f"Erro ao criar ou atualizar cliente")
+            #print(e)
+            return Response({"error": "Erro ao criar ou atualizar cliente."}, status=status.HTTP_400_BAD_REQUEST)
+    
+        # Adicione o ID do cliente ao dicionário 'data'
+        data['cliente'] = cliente_id 
+    
+        # Incluindo os documentos processados na data
+        documentos_data = process_documents(request.FILES, data)
+        data['documentos'] = documentos_data 
+
+        # Vamos testar a validação dos documentos aqui
+        doc_serializer = DocumentoSerializer(data=documentos_data, many=True)
+        doc_serializer.is_valid(raise_exception=True)
+ 
+        
+        #Validacao e criacao do processo.
+        #raise_exception=True: Isso faz com que o serializador levante uma exceção se a validação falhar
+        processo_serializer = NovoPedidoSerializer(data=data) # Aqui você passa o data com os documentos
+        processo_serializer.is_valid(raise_exception=True) # Aqui você testa a validação do processo e dos documentos
+    
+        processo_serializer.validated_data['documentos'] = documentos_data
+        processo_obj = processo_serializer.save() # Aqui você obtém o objeto Processos criado
+
+        #Aqui criamos a instancia de transacao
+        transacao_obj = criar_transacao(cliente_data, processo_obj, data.get('servico'))
+        if not transacao_obj:
+            logger.error("Erro ao criar transação. Serviço não encontrado.")
+            return Response({"error": "Serviço não encontrado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(processo_serializer.data, status=status.HTTP_201_CREATED)
+    except ValidationError as e:
+        logger.error("Erro de validação: %s", e.detail)
+        return Response({"error": str(e.detail)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error("Erro desconhecido: %s", str(e))
+        return Response({"error": "Ocorreu um erro desconhecido."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        

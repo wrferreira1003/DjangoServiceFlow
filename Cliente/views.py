@@ -1,4 +1,4 @@
-from .serializers import ClienteSerializer, UserSerializer,AtualizaClienteSerializer
+from .serializers import UserSerializer,AtualizaClienteSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -40,7 +40,29 @@ def verifica_email(request, email):
     else:
         return Response({"exists": False}, status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+def verifica_cpf_email(request, cpf, email):
+    try:
+        cliente_com_cpf = Cliente.objects.get(cpf=cpf)
+    except Cliente.DoesNotExist:
+        cliente_com_cpf = None
 
+    try:
+        cliente_com_email = Cliente.objects.get(email=email)
+    except Cliente.DoesNotExist:
+        cliente_com_email = None
+
+    if cliente_com_cpf is not None and cliente_com_email is not None:
+        if cliente_com_cpf.id == cliente_com_email.id:
+            # CPF e e-mail pertencem ao mesmo cliente
+            return Response({"exists": True, "same_client": True}, status=status.HTTP_200_OK)
+        else:
+            # CPF e e-mail pertencem a clientes diferentes
+            return Response({"exists": True, "same_client": False}, status=status.HTTP_200_OK)
+    else:
+        # CPF ou e-mail não existem
+        return Response({"exists": False, "same_client": False}, status=status.HTTP_200_OK)
+    
 class AtualizaClienteViewSet(APIView):
     def put(self, request, pk=None):
         try:
@@ -78,32 +100,6 @@ def validate_account(request):
         pass# Token não encontrado, renderizando página com mensagem de erro
     return render(request, 'cliente/erro.html', {'message': 'Ocorreu um erro ao validar seu e-mail. O token pode ser inválido ou ter expirado.'})
 
-class LoginUserView(APIView):
-   
-    def post(self, request):
-        email = request.data.get("email")
-        password = request.data.get("senha")
-     
-        try:
-            cliente = Cliente.objects.get(email=email)
-        except Cliente.DoesNotExist:
-            return Response({"error": "Email inválido."}, status=status.HTTP_401_UNAUTHORIZED)
-        
-
-        if not cliente.check_password(password):
-            return Response({"error": "Senha inválida."}, status=status.HTTP_401_UNAUTHORIZED)
-   
- 
-        # Se chegou aqui, as credenciais são válidas; gere o token
-        refresh = RefreshToken.for_user(cliente)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
-
-        # Serializar os dados do afiliado
-        cliente_data = UserSerializer(cliente).data
-
-        return Response({"token": access_token,"refresh_token": refresh_token, "user": cliente_data}, status=status.HTTP_200_OK)
-    
 @api_view(['GET'])
 def ListagemClienteCpf(request, cpf):
     try:
