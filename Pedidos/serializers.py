@@ -1,6 +1,6 @@
 # serializers.py dentro do seu app
 from rest_framework import serializers
-from .models import FinanciamentoImovel,Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, Cartorio, ClienteTerceiro, ClientEmpresarial
+from .models import FinanciamentoImovel,Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, Cartorio, ClienteTerceiro, ClientEmpresarial, ConsultaServicosGeralCPF, ConsultaServicosGeralVeiculo
 from Afiliados.models import AfiliadosModel
 from Cliente.serializers import ClienteSerializer
 from financeiro.models import Transacao
@@ -275,4 +275,12 @@ class AtualizaDocumentoSerializer(serializers.ModelSerializer):
 
             return instance
 
+class ConsultaServicosGeralCPFSerilizer(serializers.ModelSerializer):
+    class Meta:
+        model = ConsultaServicosGeralCPF
+        fields = '__all__'
 
+class ConsultaServicosGeralVeiculoSerilizer(serializers.ModelSerializer):
+    class Meta:
+        model = ConsultaServicosGeralVeiculo
+        fields = '__all__'
