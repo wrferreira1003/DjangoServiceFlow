@@ -3,7 +3,7 @@ from rest_framework import status, generics
 from datetime import datetime
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from .serializers import ClienteCertidoesSerializer, ClienteTerceiroSerializer, CartorioSerializer, ClientJobSerializer, FinanciamentoVeiculoSerializer,ClienteSerializerAlteracaoAdmAfiliado, NovoPedidoSerializer,DocumentoSerializer, ClienteSerializerConsulta, ClienteSerializerAlteracao,AtualizaDocumentoSerializer,ClientEmpresarialSerializer, FinanciamentoImovelSerializer
+from .serializers import ConsultaServicosGeralCPFSerilizer, ConsultaServicosGeralVeiculoSerilizer, ClienteCertidoesSerializer, ClienteTerceiroSerializer, CartorioSerializer, ClientJobSerializer, FinanciamentoVeiculoSerializer,ClienteSerializerAlteracaoAdmAfiliado, NovoPedidoSerializer,DocumentoSerializer, ClienteSerializerConsulta, ClienteSerializerAlteracao,AtualizaDocumentoSerializer,ClientEmpresarialSerializer, FinanciamentoImovelSerializer
 
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView
 from rest_framework.views import APIView
@@ -776,4 +776,11 @@ def ClienteSemCadastroView(request):
     except Exception as e:
         logger.error("Erro desconhecido: %s", str(e))
         return Response({"error": "Ocorreu um erro desconhecido."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#criar uma nova consulta simples sem armazenar o cliente no banco de dados, apenas a criacao da consulta juntamente com a transacao financeira
+def ConsultaSimplesServicosView(request):
+    pass
+
+        
+    
         

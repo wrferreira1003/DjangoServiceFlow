@@ -1,10 +1,7 @@
 from django.db import models
 from Afiliados.models import AfiliadosModel
 from django.contrib.auth.hashers import check_password
-import uuid
 
-def truncated_uuid():
-    return str(uuid.uuid4())[:32] 
 
 ESTADO_CIVIL_CHOICES = [
     ('Solteiro', 'Solteiro'),

@@ -235,3 +235,27 @@ class FinanciamentoImovel(models.Model):
     @classmethod
     def get_field_names(cls):
         return [f.name for f in cls._meta.get_fields() if f.name != "processo"]
+
+class ConsultaServicosGeralCPF(models.Model):
+    from Servicos.models import Servico
+
+    servicoCadastro = models.ForeignKey(Servico, on_delete=models.SET_NULL, null=True, blank=True) 
+    cpf = models.CharField(max_length=11, blank=True, null=True)
+    cnpj = models.CharField(max_length=14, blank=True, null=True)
+    observacoes = models.CharField(max_length=100, blank=True, null=True)
+
+    @classmethod
+    def get_field_names(cls):
+        return [f.name for f in cls._meta.get_fields()]
+    
+class ConsultaServicosGeralVeiculo(models.Model):
+    from Servicos.models import Servico
+
+    servicoCadastro = models.ForeignKey(Servico, on_delete=models.SET_NULL, null=True, blank=True) 
+    placa_veiculo = models.CharField(max_length=11, blank=True, null=True)
+    cpf = models.CharField(max_length=11, blank=True, null=True)
+    observacoes = models.CharField(max_length=100, blank=True, null=True)
+    
+    @classmethod
+    def get_field_names(cls):
+        return [f.name for f in cls._meta.get_fields()]
