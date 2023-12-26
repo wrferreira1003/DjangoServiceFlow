@@ -3,13 +3,13 @@ from rest_framework import status, generics
 from datetime import datetime
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from .serializers import ConsultaServicosGeralCPFSerilizer, ConsultaServicosGeralVeiculoSerilizer, ClienteCertidoesSerializer, ClienteTerceiroSerializer, CartorioSerializer, ClientJobSerializer, FinanciamentoVeiculoSerializer,ClienteSerializerAlteracaoAdmAfiliado, NovoPedidoSerializer,DocumentoSerializer, ClienteSerializerConsulta, ClienteSerializerAlteracao,AtualizaDocumentoSerializer,ClientEmpresarialSerializer, FinanciamentoImovelSerializer
+from .serializers import ConsultaServicosGeralCPFSerilizer, ClienteCertidoesSerializer, ClienteTerceiroSerializer, CartorioSerializer, ClientJobSerializer, FinanciamentoVeiculoSerializer,ClienteSerializerAlteracaoAdmAfiliado, NovoPedidoSerializer,DocumentoSerializer, ClienteSerializerConsulta, ClienteSerializerAlteracao,AtualizaDocumentoSerializer,ClientEmpresarialSerializer, FinanciamentoImovelSerializer
 
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, ClientEmpresarial, ClienteTerceiro, Cartorio, FinanciamentoImovel
+from .models import Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, ClientEmpresarial, ClienteTerceiro, Cartorio, FinanciamentoImovel, ConsultaServicosGeral
 from Cliente.models import Cliente
 from Cliente.serializers import ClienteSerializer, ClienteExistenteSerializer, UserSerializer
 from Servicos.models import Servico
@@ -59,7 +59,7 @@ def criar_ou_atualizar_cliente(data):
 def criar_transacao(cliente_data,processo_obj, servico_id):
     logger.info("Iniciando a criação de uma transacao...")
     try:
-
+        # ... seu código para criar ou atualizar cliente aqui ...
         cliente_instance = AfiliadosModel.objects.get(pk=cliente_data.id)
         
         afiliado = cliente_instance.afiliado_relacionado if cliente_instance.afiliado_relacionado else None
@@ -86,6 +86,41 @@ def criar_transacao(cliente_data,processo_obj, servico_id):
         #print(e)
         return None
 
+def criar_transacao_sem_cliente(cliente_data,processo_obj, servico_id):
+    logger.info("Iniciando a criação de uma transacao...")
+    
+    try:
+        cliente_id = cliente_data.get('id')
+        cliente_instance = AfiliadosModel.objects.get(pk=cliente_id) if cliente_id else None
+        
+        if cliente_instance is None and cliente_data:
+            afiliado = cliente_data.get('afiliado_relacionado', None)
+            #print(afiliado)
+        else:
+            afiliado = cliente_instance.afiliado_relacionado if cliente_instance and cliente_instance.afiliado_relacionado else None
+        
+        afiliado_instance = AfiliadosModel.objects.get(pk=afiliado)
+           
+        pedido_instance = processo_obj
+        
+        servico_instance = Servico.objects.get(pk=servico_id)
+
+        transacao_data = {
+            "cliente": cliente_instance,
+            "afiliado": afiliado_instance,
+            "servico": servico_instance,
+            "pedido": pedido_instance,
+            "preco": servico_instance.preco,
+            "FormaDePagamento": processo_obj.FormaDePagamento,
+            "statusPagamento": 'Link de pagamento não disponivel'
+        }
+        logger.info(transacao_data)
+
+        return Transacao.objects.create(**transacao_data)
+    except Exception as e:
+        logger.error(f"Erro ao criar transação: {e}")
+        #print(e)
+        return None
 #Funcao que cria os Dados de trabalho do cliente
 def criar_client_job(dados_client_job, processo_obj):
     
@@ -372,6 +407,7 @@ def delete_documento_api(request, documento_id):
 #Criar um novo pedido com cliente e documentos dos processos cartorarios
 @transaction.atomic # Isso garante que todas as operações de banco de dados sejam executadas ou nenhuma delas seja executada
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def criar_cliente_com_relacionados(request):
     logger.info("Iniciando a criação do cliente e relacionados...")
     data = request.data.copy()  # Mudança aqui
@@ -622,6 +658,7 @@ def AtualizaClienteView(request, id):  # Adicionando cliente_id para identificar
     cartorio = Cartorio.objects.filter(processo=processo).first()
     certidoes = Certidoes.objects.filter(processo=processo).first()
     imoveis = FinanciamentoImovel.objects.filter(processo=processo).first()
+
    
     
     data = request.data.copy()
@@ -778,9 +815,56 @@ def ClienteSemCadastroView(request):
         return Response({"error": "Ocorreu um erro desconhecido."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 #criar uma nova consulta simples sem armazenar o cliente no banco de dados, apenas a criacao da consulta juntamente com a transacao financeira
-def ConsultaSimplesServicosView(request):
-    pass
+class ConsultaSimplesServicosView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request, *args, **kwargs):
+        data = request.data.copy()
+        print(data)
         
+
+        #Validacao e criacao do processo.
+        #raise_exception=True: Isso faz com que o serializador levante uma exceção se a validação falhar
+        processo_serializer = NovoPedidoSerializer(data=data) # Aqui você passa o data com os documentos
+        processo_serializer.is_valid(raise_exception=True) # Aqui você testa a validação do processo e dos documentos
+        processo_obj = processo_serializer.save() # Aqui você obtém o objeto Processos criado
+
+        #Aqui criamos a instancia de transacao
+        transacao_obj = criar_transacao_sem_cliente(data, processo_obj, data.get('servico'))
+        print(processo_obj)
+        if not transacao_obj:
+            logger.error("Erro ao criar transação. Serviço não encontrado.")
+            return Response({"error": "Serviço não encontrado."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        #Criacao da consulta simples
+        data['servico'] = transacao_obj.servico.id
+        data['processo'] = processo_obj.id
+        serializer = ConsultaServicosGeralCPFSerilizer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, *args, **kwargs):
+        data = request.data.copy()
+        
+        #Recebendo o id do processo no corpo da requisição
+        consulta_id = data.get('id')
+        if not consulta_id:
+            return Response({"error": "ID da consulta não informado."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            consulta = ConsultaServicosGeral.objects.get(id=consulta_id)
+        except:
+            return Response({"error": "Consulta não encontrada."}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ConsultaServicosGeralCPFSerilizer(consulta, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EmprestimoEmGeralViewSet(APIView):
+    permission_classes = [IsAuthenticated]
+    pass
     
         
