@@ -1,6 +1,6 @@
 # serializers.py dentro do seu app
 from rest_framework import serializers
-from .models import FinanciamentoImovel,Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, Cartorio, ClienteTerceiro, ClientEmpresarial, ConsultaServicosGeralCPF, ConsultaServicosGeralVeiculo
+from .models import EmprestimoEmpresarial, GarantiaVeiculo, GarantiaImoveis, EmprestimosEmGeral, FinanciamentoImovel,Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, Cartorio, ClienteTerceiro, ClientEmpresarial, ConsultaServicosGeral
 from Afiliados.models import AfiliadosModel
 from Cliente.serializers import ClienteSerializer
 from financeiro.models import Transacao
@@ -200,6 +200,51 @@ class TransacaoSerializer(serializers.ModelSerializer):
         model = Transacao
         fields = '__all__'
 
+class ConsultaServicosGeralCPFSerilizer(serializers.ModelSerializer):
+    class Meta:
+        model = ConsultaServicosGeral
+        fields = '__all__'
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None}
+
+class EmprestimoEmGeralSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmprestimosEmGeral
+        fields = '__all__'
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None}
+
+class GarantiaImoveisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GarantiaImoveis
+        fields = '__all__'
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None}    
+    
+class GarantiaVeiculoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GarantiaVeiculo
+        fields = '__all__'
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None} 
+    
+class EmprestimoEmpresarialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmprestimoEmpresarial
+        fields = '__all__'
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None} 
+    
 class ClienteSerializerConsulta(serializers.ModelSerializer):
  
     documentos = DocumentoSerializerConsulta(many=True, source='documento_set', read_only=True)
@@ -215,8 +260,9 @@ class ClienteSerializerConsulta(serializers.ModelSerializer):
     client_empresarial = ClientEmpresarialSerializer(source='clientempresarial', read_only=True)       # Alterado aqui
     certidoes = CertidoesSerializer( read_only=True)
     financiamentoimovel = FinanciamentoImovelSerializer(read_only=True)
-    
-   
+    consultaservicosgeral = ConsultaServicosGeralCPFSerilizer(read_only=True)
+
+       
     class Meta:
         model = Processos
         fields = '__all__'
@@ -274,13 +320,3 @@ class AtualizaDocumentoSerializer(serializers.ModelSerializer):
                     Documento.objects.create(cliente=instance, **doc)
 
             return instance
-
-class ConsultaServicosGeralCPFSerilizer(serializers.ModelSerializer):
-    class Meta:
-        model = ConsultaServicosGeralCPF
-        fields = '__all__'
-
-class ConsultaServicosGeralVeiculoSerilizer(serializers.ModelSerializer):
-    class Meta:
-        model = ConsultaServicosGeralVeiculo
-        fields = '__all__'

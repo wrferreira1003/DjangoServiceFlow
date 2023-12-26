@@ -43,8 +43,9 @@ class Transacao(models.Model):
         return self.pedido.id
 
     def __str__(self):
-        return f"Transação {self.id} - Cliente: {self.cliente.nome} - Afiliado: {self.afiliado.nome if self.afiliado else 'N/A'} - Preço: {self.preco} - Status: {self.statusPagamento}"
-
+        cliente_nome = self.cliente.nome if self.cliente else 'N/A'
+        afiliado_nome = self.afiliado.nome if self.afiliado else 'N/A'
+        return f"Transação {self.id} - Cliente: {cliente_nome} - Afiliado: {afiliado_nome} - Preço: {self.preco} - Status: {self.statusPagamento}"
 #Tabela para lidar com o pagamento do cliente e Afiliado
 class TransacaoAfiliadoAdministrador(models.Model):
     from Afiliados.models import AfiliadosModel
