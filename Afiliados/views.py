@@ -12,6 +12,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.core.mail import send_mail
 from django.conf import settings
 from urllib.parse import urlencode
+from firebase_admin import auth
 import uuid
 
 link = 'https://rcfacil.cloud/api/'
@@ -130,8 +131,13 @@ class LoginView(APIView):
 
         if not afiliado.check_password(senha):
             return Response({"error": "Senha inválida."}, status=status.HTTP_401_UNAUTHORIZED)
-   
-        
+
+        print(afiliado.id)    
+        #Gerando o token do firebase
+        firebase_token = auth.create_custom_token(str(afiliado.id))
+        #print(firebase_token)
+  
+
         # Se chegou aqui, as credenciais são válidas; gere o token
         refresh = RefreshToken.for_user(afiliado)
         access_token = str(refresh.access_token)
@@ -139,7 +145,7 @@ class LoginView(APIView):
         # Serializar os dados do afiliado
         afiliado_data = AfiliadosModelSerializer(afiliado).data
 
-        return Response({"token": access_token, "afiliado": afiliado_data}, status=status.HTTP_200_OK)
+        return Response({"token": access_token, "firebase_token": firebase_token, "afiliado": afiliado_data}, status=status.HTTP_200_OK)
     
 class AfiliadosPublicosView(ListAPIView):
     serializer_class = AfiliadosPublicosSerializer
