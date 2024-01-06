@@ -188,9 +188,13 @@ class ClientEmpresarial(models.Model):
     razao_social = models.CharField(max_length=100, blank=True, null=True)
     cnpj = models.CharField(max_length=100, blank=True, null=True)
     data_abertura = models.DateField(blank=True, null=True)
+    capital_social = models.CharField(max_length=100, blank=True, null=True)
     faturamento_mensal = models.CharField(max_length=100, blank=True, null=True)
     contador_nome = models.CharField(max_length=100, blank=True, null=True)
     telefone_contador = models.TextField(max_length=15, blank=True, null=True)
+    ramo_atividade = models.CharField(max_length=100, blank=True, null=True)
+    telefone = models.CharField(max_length=15, blank=True, null=True)
+    email = models.CharField(max_length=100, blank=True, null=True)
     
     @classmethod
     def get_field_names(cls):
@@ -264,11 +268,6 @@ class EmprestimosEmGeral(models.Model):
     servico = models.ForeignKey(Servico, on_delete=models.SET_NULL, null=True, blank=True)
     subservico = models.CharField(max_length=100, blank=True, null=True)
 
-    nome = models.CharField(max_length=100, blank=True, null=True)
-    cpf = models.CharField(max_length=11, blank=True, null=True)
-    telefone = models.CharField(max_length=100, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
-    data_nascimento = models.DateField(blank=True, null=True)
     numero_beneficio = models.CharField(max_length=100, blank=True, null=True)
     agencia = models.CharField(max_length=100, blank=True, null=True)
     conta = models.CharField(max_length=100, blank=True, null=True)
@@ -277,8 +276,9 @@ class EmprestimosEmGeral(models.Model):
     alfaetizado = models.CharField(max_length=5, blank=True, null=True)
     finalidade_emprestimo = models.CharField(max_length=100, blank=True, null=True)
     profissao = models.CharField(max_length=100, blank=True, null=True)
+    
     parcelas = models.CharField(max_length=100, blank=True, null=True)
-
+    valor = models.CharField(max_length=100, blank=True, null=True)
     #Retorna todas as colunas da tabela
     @classmethod
     def get_field_names(cls):
@@ -286,6 +286,7 @@ class EmprestimosEmGeral(models.Model):
     
 class GarantiaImoveis(models.Model):
     emprestimo_id = models.ForeignKey(EmprestimosEmGeral, on_delete=models.CASCADE, related_name='garantia_imoveis', null=True, blank=True)
+    processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
     tipo_imovel = models.CharField(max_length=100, blank=True, null=True)
     localizacao_estado = models.CharField(max_length=100, blank=True, null=True)
     situacao_imovel = models.CharField(max_length=100, blank=True, null=True)
@@ -303,18 +304,22 @@ class GarantiaImoveis(models.Model):
     
 class GarantiaVeiculo(models.Model):
     emprestimo_id = models.ForeignKey(EmprestimosEmGeral, on_delete=models.CASCADE, related_name='garantia_veiculo', null=True, blank=True)
+    processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
     tipo_veiculo = models.CharField(max_length=100, blank=True, null=True)
-    placa_veiculo = models.CharField(max_length=100, blank=True, null=True)
     marca = models.CharField(max_length=100, blank=True, null=True)
     modelo = models.CharField(max_length=100, blank=True, null=True)
     ano_modelo = models.CharField(max_length=100, blank=True, null=True)
-    ano_fabricacao = models.CharField(max_length=100, blank=True, null=True)
+    placa = models.CharField(max_length=100, blank=True, null=True)
     versao = models.CharField(max_length=100, blank=True, null=True)
+    estado_licenciamento = models.CharField(max_length=100, blank=True, null=True)
+    valor = models.CharField(max_length=100, blank=True, null=True)
+    entrada = models.CharField(max_length=100, blank=True, null=True)
+    prazo = models.CharField(max_length=100, blank=True, null=True)    
+    banco = models.CharField(max_length=100, blank=True, null=True)
+    possui_carroceria = models.CharField(max_length=100, blank=True, null=True)
+    ano_fabricacao = models.CharField(max_length=100, blank=True, null=True)
     combustivel = models.CharField(max_length=100, blank=True, null=True)
     cambio = models.CharField(max_length=100, blank=True, null=True)
-    valor_financiamento = models.CharField(max_length=100, blank=True, null=True)
-    valor_entrada = models.CharField(max_length=100, blank=True, null=True)
-    estado_do_licenciamento = models.CharField(max_length=100, blank=True, null=True)
 
     #Retorna todas as colunas da tabela
     @classmethod
@@ -322,6 +327,7 @@ class GarantiaVeiculo(models.Model):
       return [f.name for f in cls._meta.get_fields()]
 class EmprestimoEmpresarial(models.Model):
     emprestimo_id = models.ForeignKey(EmprestimosEmGeral, on_delete=models.CASCADE, related_name='empresarial', null=True, blank=True)
+    processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
     atividade_empresarial = models.CharField(max_length=100, blank=True, null=True)
     faturamento = models.CharField(max_length=100, blank=True, null=True)
     destino_recurso = models.CharField(max_length=100, blank=True, null=True)
@@ -332,3 +338,39 @@ class EmprestimoEmpresarial(models.Model):
     @classmethod
     def get_field_names(cls):
       return [f.name for f in cls._meta.get_fields()]
+
+class DadosBancariosclients(models.Model):
+  processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
+  nome_banco = models.CharField(max_length=100, blank=True, null=True)
+  agencia = models.CharField(max_length=100, blank=True, null=True)
+  conta = models.CharField(max_length=100, blank=True, null=True)
+  tipo_conta = models.CharField(max_length=100, blank=True, null=True)
+  @classmethod
+  def get_field_names(cls):
+    return [f.name for f in cls._meta.get_fields()]
+
+class DadosPessoaisDeTerceiros(models.Model):
+  processo = models.OneToOneField(Processos, on_delete=models.CASCADE,blank=True, null=True)
+  nome = models.CharField(max_length=100, blank=True, null=True)
+  email = models.EmailField( blank=True, null=True) 
+  cpf = models.CharField(max_length=11, blank=True, null=True)
+  telefone = models.CharField(max_length=15, blank=True, null=True)
+  RegistroGeral = models.CharField(max_length=20, blank=True, null=True)
+  Data_emissao_rg = models.DateField( blank=True, null=True)
+  orgao_emissor_rg = models.CharField(max_length=20, blank=True, null=True)
+  data_nascimento = models.DateField( blank=True, null=True)
+  genero = models.CharField(max_length=10, blank=True, null=True)
+  naturalidade = models.CharField(max_length=100, blank=True, null=True)
+  estado_civil = models.CharField(max_length=15, blank=True, null=True)
+  cnh = models.CharField(max_length=20, blank=True, null=True)
+  filiacao1 = models.CharField(max_length=100, blank=True, null=True)
+  filiacao2 = models.CharField(max_length=100, blank=True, null=True)
+  nome_banco = models.CharField(max_length=100, blank=True, null=True)
+  agencia = models.CharField(max_length=100, blank=True, null=True)
+  conta = models.CharField(max_length=100, blank=True, null=True)
+  tipo_conta = models.CharField(max_length=100, blank=True, null=True)
+    
+  @classmethod
+  def get_field_names(cls):
+    return [f.name for f in cls._meta.get_fields()]
+  

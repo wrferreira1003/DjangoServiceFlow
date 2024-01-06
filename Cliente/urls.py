@@ -17,8 +17,8 @@ router.register(r'user', TodosClientesViewSet)
 urlpatterns = [
   path('atualiza/<int:pk>/', AtualizaClienteViewSet.as_view(), name='atualizar_cliente'),
   path('validate/', validate_account, name='validate'),
-  path('cpf/<str:cpf>/', verifica_cpf),
-  path('email/<str:email>/', verifica_email),
+  path('cpf/<str:cpf>/<str:email>/', verifica_cpf),
+  path('email/<str:cpf>/<str:email>/', verifica_email),
   path('listcpf/<str:cpf>/', ListagemClienteCpf),
   path('cpf_email/<str:cpf>/<str:email>/', verifica_cpf_email),
 

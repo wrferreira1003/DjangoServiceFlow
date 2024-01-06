@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from .views import EmprestimoEmGeralViewSet, ConsultaSimplesServicosView, ClienteSemCadastroView, ClienteFinanciamentoImoveis, ClienteFinanciamentoVeiculo, ClienteDetailViewAlteracaoStatusAdmAfiliado,criar_cliente_com_relacionados,NovoClienteDetailView,TodosClientesView,ClienteDetailView,TodosClientesViewSemFiltro,ClienteDetailViewAlteracao,AtualizaClienteView,PedidosPorAfiliadoListView, PedidosPorClienteListView, delete_documento_api,PedidosPorFuncionarioListView
+from .views import ContabilidadeViews, SolucoesdeCreditoViews, EmprestimoEmGeralViewSet, ConsultaSimplesServicosView, ClienteSemCadastroView, ClienteFinanciamentoImoveis, ClienteFinanciamentoVeiculo, ClienteDetailViewAlteracaoStatusAdmAfiliado,criar_cliente_com_relacionados,NovoClienteDetailView,TodosClientesView,ClienteDetailView,TodosClientesViewSemFiltro,ClienteDetailViewAlteracao,AtualizaClienteView,PedidosPorAfiliadoListView, PedidosPorClienteListView, delete_documento_api,PedidosPorFuncionarioListView
 from django.urls import path
 
 app_name = 'pedidos'
@@ -14,7 +14,9 @@ urlpatterns = [
     path('imoveis/', ClienteFinanciamentoImoveis, name='processo_financiamento_imoveis'),
     path('client_sem_cadastro/', ClienteSemCadastroView, name='client_sem_cadastro'),
     path('emprestimo_geral/', EmprestimoEmGeralViewSet.as_view(), name='emprestimo_geral'),
-    
+    path('solucoes_credito/', SolucoesdeCreditoViews.as_view(), name='solucoes_credito'),
+    path('contabilidade/', ContabilidadeViews.as_view(), name='contabilidade'),
+
     path('consulta_geral/', ConsultaSimplesServicosView.as_view(), name='servico_geral'),
     path('requests/<str:id>/', NovoClienteDetailView.as_view(), name='cliente-detail'),
     path('listrequest/', TodosClientesView.as_view(), name='todos-clientes'),
