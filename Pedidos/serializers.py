@@ -1,6 +1,6 @@
 # serializers.py dentro do seu app
 from rest_framework import serializers
-from .models import EmprestimoEmpresarial, GarantiaVeiculo, GarantiaImoveis, EmprestimosEmGeral, FinanciamentoImovel,Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, Cartorio, ClienteTerceiro, ClientEmpresarial, ConsultaServicosGeral
+from .models import DadosPessoaisDeTerceiros, DadosBancariosclients, EmprestimoEmpresarial, GarantiaVeiculo, GarantiaImoveis, EmprestimosEmGeral, FinanciamentoImovel,Certidoes, Processos, Documento, ClientJob, FinanciamentoVeiculo, Cartorio, ClienteTerceiro, ClientEmpresarial, ConsultaServicosGeral
 from Afiliados.models import AfiliadosModel
 from Cliente.serializers import ClienteSerializer
 from financeiro.models import Transacao
@@ -245,6 +245,23 @@ class EmprestimoEmpresarialSerializer(serializers.ModelSerializer):
         result = super().to_representation(instance)
         return {key: value for key, value in result.items() if value is not None} 
     
+class DadosBancariosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DadosBancariosclients
+        fields = '__all__'
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None} 
+    
+class DadosPessoaisDeTerceirosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DadosPessoaisDeTerceiros
+        fields = '__all__'
+    #Retorno apenas dados que tem valores
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        return {key: value for key, value in result.items() if value is not None} 
 class ClienteSerializerConsulta(serializers.ModelSerializer):
  
     documentos = DocumentoSerializerConsulta(many=True, source='documento_set', read_only=True)
@@ -261,7 +278,12 @@ class ClienteSerializerConsulta(serializers.ModelSerializer):
     certidoes = CertidoesSerializer( read_only=True)
     financiamentoimovel = FinanciamentoImovelSerializer(read_only=True)
     consultaservicosgeral = ConsultaServicosGeralCPFSerilizer(read_only=True)
-
+    emprestimosemgeral = EmprestimoEmGeralSerializer(read_only=True)
+    garantiaimoveis = GarantiaImoveisSerializer(read_only=True)
+    garantiaveiculo = GarantiaVeiculoSerializer(read_only=True)
+    emprestimoempresarial = EmprestimoEmpresarialSerializer(read_only=True)
+    dadosbancariosclients = DadosBancariosSerializer(read_only=True)
+    dadospessoaisdeterceiros = DadosPessoaisDeTerceirosSerializer(read_only=True)
        
     class Meta:
         model = Processos

@@ -130,20 +130,34 @@ class ClienteSerializer(serializers.ModelSerializer):
 #Funcao que valida o cliente que nao e cadastrado como usuario no sistema, para solicitacoes soim
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Cliente
-        fields = [ 'id',
-                    'afiliado',
-                    'funcionario', 
-                    'nome', 
-                    'cpf',    
-                    'email',
-                    'telefone',
-                    'RegistroGeral',
-                    'data_nascimento',
-                    'genero',
-                    'naturalidade',
-                    'cnh',                    
-                ]
+        model = AfiliadosModel
+        fields = [
+            'id',
+            'nome',
+            'cpf',
+            'email',
+            'telefone',
+            'RegistroGeral',
+            'Data_emissao_rg',
+            'orgao_emissor_rg',
+            'estado_civil',
+            'profissao',
+            'data_nascimento',
+            'genero',
+            'naturalidade',
+            'cnh',
+            'cep',
+            'estado',
+            'logradouro',
+            'bairro',
+            'cidade',
+            'complemento',
+            'numero',
+            'nome_mae',
+            'nome_pai',
+            
+
+        ]
 
 class AtualizaClienteSerializer(serializers.ModelSerializer):
     

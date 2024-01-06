@@ -9,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
 from Afiliados.models import AfiliadosModel as Cliente
+from rest_framework.decorators import permission_classes
 
 class TodosClientesViewSet(viewsets.ModelViewSet):  # ReadOnly porque só queremos listar, sem criar, atualizar ou deletar
    
@@ -26,42 +27,40 @@ class TodosClientesViewSet(viewsets.ModelViewSet):  # ReadOnly porque só querem
 
 #Verificar se o CPF ja existe
 @api_view(['GET'])
-def verifica_cpf(request, cpf):
-    if Cliente.objects.filter(cpf=cpf).exists():
-        return Response({"exists": True}, status=status.HTTP_200_OK)
-    else:
+def verifica_cpf(request, cpf, email):
+    try:
+        cliente_cpf = Cliente.objects.get(cpf=cpf)
+        if cliente_cpf.email == email:
+            return Response({"exists": False}, status=status.HTTP_200_OK)
+        else:
+            return Response({"exists": True}, status=status.HTTP_200_OK)
+    except ObjectDoesNotExist:
         return Response({"exists": False}, status=status.HTTP_200_OK)
 
 #Verificar se o Email ja existe
 @api_view(['GET'])
-def verifica_email(request, email):
-    if Cliente.objects.filter(email=email).exists():
-        return Response({"exists": True}, status=status.HTTP_200_OK)
-    else:
+def verifica_email(request, email, cpf):
+    try:
+        cliente = Cliente.objects.get(email=email)
+        if cliente.cpf == cpf:
+            return Response({"exists": False}, status=status.HTTP_200_OK)
+        else:
+            return Response({"exists": True}, status=status.HTTP_200_OK)
+    except ObjectDoesNotExist:
         return Response({"exists": False}, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def verifica_cpf_email(request, cpf, email):
     try:
-        cliente_com_cpf = Cliente.objects.get(cpf=cpf)
-    except Cliente.DoesNotExist:
-        cliente_com_cpf = None
-
-    try:
-        cliente_com_email = Cliente.objects.get(email=email)
-    except Cliente.DoesNotExist:
-        cliente_com_email = None
-
-    if cliente_com_cpf is not None and cliente_com_email is not None:
-        if cliente_com_cpf.id == cliente_com_email.id:
-            # CPF e e-mail pertencem ao mesmo cliente
-            return Response({"exists": True, "same_client": True}, status=status.HTTP_200_OK)
+        cliente_cpf = Cliente.objects.get(cpf=cpf, user_type='CLIENTE')
+        cliente_email = Cliente.objects.get(email=email, user_type='CLIENTE')
+    
+        if cliente_cpf.id == cliente_email.id:
+            return Response({"exists": True}, status=status.HTTP_200_OK)
         else:
-            # CPF e e-mail pertencem a clientes diferentes
-            return Response({"exists": True, "same_client": False}, status=status.HTTP_200_OK)
-    else:
-        # CPF ou e-mail não existem
-        return Response({"exists": False, "same_client": False}, status=status.HTTP_200_OK)
+            return Response({"exists": False}, status=status.HTTP_200_OK)
+    except Cliente.DoesNotExist:
+        return Response({"exists": False}, status=status.HTTP_200_OK)
     
 class AtualizaClienteViewSet(APIView):
     def put(self, request, pk=None):
@@ -101,6 +100,7 @@ def validate_account(request):
     return render(request, 'cliente/erro.html', {'message': 'Ocorreu um erro ao validar seu e-mail. O token pode ser inválido ou ter expirado.'})
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def ListagemClienteCpf(request, cpf):
     try:
         cliente = Cliente.objects.get(cpf=cpf)
