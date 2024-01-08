@@ -108,3 +108,19 @@ def ListagemClienteCpf(request, cpf):
         return Response(serializer.data, status=status.HTTP_200_OK)
     except Cliente.DoesNotExist:
         return Response({'error': 'Cliente não encontrado'}, status=404)
+    
+@api_view(['GET'])
+def valida_cpf(request, cpf):
+    try:
+        cliente = Cliente.objects.get(cpf=cpf)
+        return Response({"exists": True}, status=status.HTTP_200_OK)
+    except Cliente.DoesNotExist:
+        return Response({"exists": False}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def valida_email(request, email):
+    try:
+        cliente = Cliente.objects.get(email=email)
+        return Response({"exists": True}, status=status.HTTP_200_OK)
+    except Cliente.DoesNotExist:
+        return Response({"exists": False}, status=status.HTTP_200_OK)

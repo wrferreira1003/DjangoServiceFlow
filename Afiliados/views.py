@@ -149,7 +149,6 @@ class LoginView(APIView):
     
 class AfiliadosPublicosView(ListAPIView):
     serializer_class = AfiliadosPublicosSerializer
-    permission_classes = [IsAuthenticated]
     def get_queryset(self):
         queryset = AfiliadosModel.objects.filter(user_type='AFILIADO')
         estado = self.kwargs.get('estado')
@@ -172,19 +171,18 @@ class FuncionariosPorAfiliadoView(APIView):
 
 #Cadastro de Clientes no banco de dados
 class ClientePorAfiliadoView(APIView):
-    permission_classes = [IsAuthenticated]
-    
     def post(self, request, afiliado_id):
         try:
             afiliado = AfiliadosModel.objects.get(id=afiliado_id)
-            cliente = afiliado.clientes.filter(user_type='CLIENTE')
-            serializer = AfiliadosModelSerializer(cliente, many=True)
+            #cliente = afiliado.clientes.filter(user_type='CLIENTE')
+            #serializer = AfiliadosModelSerializer(cliente, many=True)
         except AfiliadosModel.DoesNotExist:
             return Response({"error": "Afiliado não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-        data = request.data
+        data = request.data.copy()
+
         data['user_type'] = 'CLIENTE'
-        data['afiliado_relacionado'] = afiliado_id
+        data['afiliado_relacionado'] = afiliado.id
         
         #tokem de validação da conta
         validation_token = generate_validation_token()
@@ -203,7 +201,8 @@ class ClientePorAfiliadoView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
+
     def put(self, request, afiliado_id):
         try:
             afiliado = AfiliadosModel.objects.get(id=afiliado_id)
